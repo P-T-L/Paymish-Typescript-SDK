@@ -1,0 +1,1 @@
+# Paymish TypeScript SDK
