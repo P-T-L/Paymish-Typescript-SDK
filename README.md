@@ -174,70 +174,75 @@ const resolved = await paymish.banks.resolveAccount(params, {
 
 ### Business Resource (`paymish.business`)
 
-#### `changeMode(payload, [options])`
+#### `changeMode(payload, options?)`
 
-Toggles or changes the environment mode of the business between Live and "not Live" environments.
+Changes the mode (live or not live) of the business.
 
-- `payload (Object \| boolean, Required)` — Pass `{ isLive: boolean }` or directly a boolean value (`true` for Live, `false` for "not Live").
-- `options (Object, Optional)` — Custom per-request configuration options (e.g., headers containing `Authorization`).
+- **Endpoint:** `POST /api/user-service/external/v1/change-business-mode`
+- `payload: ChangeBusinessModeInput` **(`{isLive: boolean } | boolean`, Required)** — Pass `{ isLive: true }` or `true` for live mode and `{isLive: false}` or `false` for non-live mode.
+- `options?: RequestOptions` **(Optional)** — Custom headers, `idempotencyKey`, or `customTimeout`.
+- **Returns:** `Promise<ApiResponse<BusinessProfile>>`
 
 ```javascript
-// Passing object parameter
-const response = await paymish.business.changeMode(
+await paymish.business.changeMode(
   { isLive: false },
-  { headers: { Authorization: "Bearer YOUR_SECRET_KEY" } },
+  { headers: { Authorization: "Bearer YOUR_TOKEN" } },
 );
-
-// Or passing a direct boolean
-const response = await paymish.business.changeMode(true, {
-  headers: { Authorization: "Bearer YOUR_SECRET_KEY" },
-});
 ```
 
-#### `getDetails([options])`
+#### `getDetails(options?)`
 
 Retrieves full details for the authenticated business profile.
 
-- `options (Object, Optional)` — Custom per-request configuration options (e.g., headers containing `Authorization`).
+- **Endpoint:** `GET /api/user-service/external/v1/get-business-detail`
+- `options?: RequestOptions` **(Optional)** — Custom headers, `idempotencyKey`, or `customTimeout`.
+- **Returns:** `Promise<ApiResponse<BusinessProfile>>`
 
 ```javascript
-const businessProfile = await paymish.business.getDetails({
-  headers: { Authorization: "Bearer YOUR_SECRET_KEY" },
+await paymish.business.getDetails({
+  headers: { Authorization: "Bearer YOUR_TOKEN" },
 });
 ```
 
-#### `createBusiness(payload, [options])`
+#### `createBusiness(payload, options?)`
 
-Adds a new business profile under the account.
+Adds a new business profile.
 
-- `payload (Object, Required)`
-  - `countryId (number, Required)` — Country identifier.
-  - `businessName (string, Required)` — Name of the business.
-  - `businessCategory (number, Required)` — Category identifier.
-  - `businessDescription (string, Optional)` — Description of the business.
-- `options (Object, Optional)` — Custom per-request configuration options.
+- **Endpoint:** `POST /api/user-service/external/v1/add-new-business`
+- `payload: CreateBusinessPayload` **(Required)**
+  - `countryId: number` — The country identifier.
+  - `businessName: string` — The name of the business.
+  - `businessCategory: number` — The business category identifier.
+  - `businessDescription?: string` — Optional business description.
+- `options?: RequestOptions` **(Optional)** — Custom headers, `idempotencyKey`, or `customTimeout`.
+- **Returns:** `Promise<ApiResponse<BusinessProfile>>`
 
 ```javascript
-const newBusiness = await paymish.business.createBusiness(
-  {
-    countryId: 1,
-    businessName: "Acme Corp",
-    businessCategory: 2,
-    businessDescription: "E-commerce platform",
-  },
-  { headers: { Authorization: "Bearer YOUR_SECRET_KEY" } },
-);
+import type { CreateBusinessPayload } from "paymish-typescript-sdk";
+
+const payload: CreateBusinessPayload = {
+  countryId: 1,
+  businessName: "Paymish Merchant Ltd",
+  businessCategory: 4,
+  businessDescription: "Digital commerce operations",
+};
+
+const created = await paymish.business.createBusiness(payload, {
+  headers: { Authorization: "Bearer YOUR_TOKEN" },
+});
 ```
 
-#### `listBusinesses([options])`
+#### `listBusinesses(options?)`
 
 Retrieves the list of businesses associated with the account.
 
-- `options (Object, Optional)` — Custom per-request configuration options.
+- **Endpoint:** `GET /api/user-service/external/v1/business-list`
+- `options?: RequestOptions` **(Optional)** — Custom headers, `idempotencyKey`, or `customTimeout`.
+- **Returns:** `Promise<ApiResponse<BusinessProfile[]>>`
 
 ```javascript
 const businesses = await paymish.business.listBusinesses({
-  headers: { Authorization: "Bearer YOUR_SECRET_KEY" },
+  headers: { Authorization: "Bearer YOUR_TOKEN" },
 });
 ```
 
