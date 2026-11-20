@@ -248,62 +248,93 @@ const businesses = await paymish.business.listBusinesses({
 
 ### Customer Resource (paymish.customer)
 
-#### `createCustomer(payload, [options])`
+#### `createCustomer(payload, options?)`
 
 Creates a new customer record.
 
-- `payload (Object, Required)`
-  - `email (string, Required)` — Customer email address.
-  - `firstName (string, Required)` — Customer first name.
-  - `lastName (string, Required)` — Customer last name.
-  - `phoneNumber (string, Required)` — Customer phone number.
-  - `countryId (number, Required)` — Country identifier.
-- `options (Object, Optional)` — Custom per-request options.
+- **Endpoint:** `POST /api/customer-service/external/v1/create`
+- `payload: CreateCustomerPayload` **(Required)**
+  - `email: string` — Customer's email address.
+  - `firstName: string` — Customer's first name.
+  - `lastName: string` — Customer's last name.
+  - `phoneNumber: string` — Customer's phone number.
+  - `countryId: number` — Customer's country identifier.
+  - `dialingCodeId?: number` — Optional dialing code identifier.
+  - `businessId?: number` — Optional associated business identifier.
+- `options?: RequestOptions` **(Optional)** — Custom headers, `idempotencyKey`, or `customTimeout`.
+- **Returns:** `Promise<ApiResponse<CustomerRecord>>`
 
 ```javascript
-const customer = await paymish.customer.createCustomer(
-  {
-    email: "john.doe@example.com",
-    firstName: "John",
-    lastName: "Doe",
-    phoneNumber: "+1234567890",
-    countryId: 1,
-  },
-  { headers: { Authorization: "Bearer YOUR_SECRET_KEY" } },
-);
+import type { CreateCustomerPayload } from "paymish-typescript-sdk";
+
+const payload: CreateCustomerPayload = {
+  email: "customer@example.com",
+  firstName: "Ada",
+  lastName: "Okafor",
+  phoneNumber: "08012345678",
+  countryId: 1,
+  dialingCodeId: 1,
+  businessId: 10,
+};
+
+const created = await paymish.customer.createCustomer(payload, {
+  headers: { Authorization: "Bearer YOUR_TOKEN" },
+});
 ```
 
-#### `updateCustomer(payload, [options])`
+#### `updateCustomer(payload, options?)`
 
 Updates an existing customer record.
 
-- `payload (Object, Required)`
-  - `customerReference (string, Required)` — The reference ID of the customer.
-  - Other updatable profile properties.
-- `options (Object, Optional)` — Custom per-request options.
+- **Endpoint:** `PUT /api/customer-service/external/v1/customer-update`
+- `payload: UpdateCustomerPayload` **(Required)**
+  - `customerReference: string` — Reference identifier for the customer.
+  - `firstName?: string` — Updated first name.
+  - `lastName?: string` — Updated last name.
+  - `phoneNumber?: string` — Updated phone number.
+  - `dialingCodeId?: number` — Updated dialing code identifier.
+- `options?: RequestOptions` **(Optional)** — Custom headers, `idempotencyKey`, or `customTimeout`.
+- **Returns:** `Promise<ApiResponse<CustomerRecord>>`
 
-#### `listCustomers([params], [options])`
+```javascript
+import type { UpdateCustomerPayload } from "paymish-typescript-sdk";
 
-Retrieves a paginated list of customers. Automatically defaults to `page: 1` and `limit: 10` if omitted.
+const updatePayload: UpdateCustomerPayload = {
+  customerReference: "CUS_123456",
+  firstName: "Adaeze",
+};
 
-- `params (Object, Optional)` — Query parameters (e.g., `{ page: 2, limit: 20, search: "John" }`).
-- `options (Object, Optional)` — Custom per-request options.
+const updated = await paymish.customer.updateCustomer(updatePayload, {
+  headers: { Authorization: "Bearer YOUR_TOKEN" },
+});
+```
+
+#### `listCustomers(params?, options?)`
+
+Retrieves a paginated list of customers (defaults to `page: 1` and `limit: 10`).
+
+- **Endpoint:** `GET /api/customer-service/external/v1/list`
+- `params?: ListCustomersParams` **(Optional)** — Query parameters such as `page`, `limit`, and `search`.
+- `options?: RequestOptions` **(Optional)** — Custom headers, `idempotencyKey`, or `customTimeout`.
+- **Returns:** `Promise<ApiResponse<CustomerRecord[]>>`
 
 ```javascript
 const customers = await paymish.customer.listCustomers(
-  { page: 1, limit: 15 },
-  { headers: { Authorization: "Bearer YOUR_SECRET_KEY" } },
+  { page: 1, limit: 15, search: "Ada" },
+  { headers: { Authorization: "Bearer YOUR_TOKEN" } },
 );
 ```
 
-#### `blacklistCustomer(payload, [options])`
+#### `blacklistCustomer(payload, options?)`
 
-Blacklists or whitelists a customer profile.
+Blacklists or whitelists a customer.
 
-- `payload (Object, Required)`
-  - `customerReference (string, Required)` — The reference ID of the customer.
-  - `isBlackListed (boolean, Required)` — Set true to blacklist or false to whitelist.
-- options (Object, Optional) — Custom per-request options.
+- **Endpoint:** `PUT /api/customer-service/external/v1/black-listed`
+- `payload: BlacklistCustomerPayload` **(Required)**
+  - `customerReference: string` — Reference identifier for the customer.
+  - `isBlackListed: boolean` — Pass `true` to blacklist or `false` to whitelist.
+- `options?: RequestOptions` **(Optional)** — Custom headers, `idempotencyKey`, or `customTimeout`.
+- **Returns:** `Promise<ApiResponse<CustomerRecord>>`
 
 ```javascript
 await paymish.customer.blacklistCustomer(
@@ -311,72 +342,103 @@ await paymish.customer.blacklistCustomer(
     customerReference: "CUST_12345",
     isBlackListed: true,
   },
-  { headers: { Authorization: "Bearer YOUR_SECRET_KEY" } },
+  { headers: { Authorization: "Bearer YOUR_TOKEN" } },
 );
 ```
 
-#### `getCustomerById(customerId, [options])`
+#### `getCustomerById(customerId, options?)`
 
-Retrieves customer details by integer ID.
+Retrieves customer details by integer ID (or an object containing `customerId`, `id`, or `customerReference`).
 
-- `customerId (number, Required)` — The customer's integer ID (supports passing as a direct number or via { customerId: number }).
-- `options (Object, Optional)` — Custom per-request options.
+- **Endpoint:** `GET /api/customer-service/external/v1/get-customer-by-id`
+- `identifier: CustomerIdentifierInput` **(Required)** — Integer customer ID or an identifier object.
+- `options?: RequestOptions` **(Optional)** — Custom headers, `idempotencyKey`, or `customTimeout`.
+- **Returns:** `Promise<ApiResponse<CustomerRecord>>`
 
 ```javascript
-const customerDetails = await paymish.customer.getCustomerById(101, {
-  headers: { Authorization: "Bearer YOUR_SECRET_KEY" },
+const customer = await paymish.customer.getCustomerById(101, {
+  headers: { Authorization: "Bearer YOUR_TOKEN" },
 });
 ```
 
 ### TransactionCustomer Resource (paymish.transactionCustomer)
 
-#### `listCustomers([params], [options])`
+#### `listCustomers(params?, options?)`
 
-Retrieves a paginated list of transaction-service customers.
+Retrieves a paginated list of transaction customers.
 
-- `params (Object, Optional)` — Query parameters for filtering and pagination.
-- `options (Object, Optional)` — Custom per-request options.
+- **Endpoint:** `GET /api/transaction-service/external/v1/customers`
+- `params?: ListTransactionCustomersParams` **(Optional)** — Query parameters such as `page`, `limit`, and `search`.
+- `options?: RequestOptions` **(Optional)** — Custom headers, `idempotencyKey`, or `customTimeout`.
+- **Returns:** `Promise<ApiResponse<TransactionCustomerRecord[]>>`
 
 ```javascript
-const txCustomers = await paymish.transactionCustomer.listCustomers(
-  { page: 1, limit: 10 },
-  { headers: { Authorization: "Bearer YOUR_SECRET_KEY" } },
+const customers = await paymish.transactionCustomer.listCustomers(
+  { page: 1, limit: 10, search: "Ada" },
+  { headers: { Authorization: "Bearer YOUR_TOKEN" } },
 );
 ```
 
-#### `createCustomer(payload, [options])`
+#### `createCustomer(payload, options?)`
 
-Creates a new customer in the transaction service.
+Creates a new customer record in the transaction service.
 
-- `payload (Object, Required)` — Customer details payload.
-- `options (Object, Optional)` — Custom per-request options.
-
-#### `getCustomerById(identifier, [options])`
-
-Retrieves transaction customer details by ID (supports string or numeric IDs).
-
-- `identifier (string | number | Object, Required)` — Customer ID string/number or options object containing id or customerId.
-- `options (Object, Optional)` — Custom per-request options.
+- **Endpoint:** `POST /api/transaction-service/external/v1/customers`
+- `payload: CreateTransactionCustomerPayload` **(Required)** — Customer creation payload object.
+- `options?: RequestOptions` **(Optional)** — Custom headers, `idempotencyKey`, or `customTimeout`.
+- **Returns:** `Promise<ApiResponse<TransactionCustomerRecord>>`
 
 ```javascript
-const txCustomer = await paymish.transactionCustomer.getCustomerById("tx_cust_123", {
-`headers: { Authorization: "Bearer YOUR_SECRET_KEY" },
+import type { CreateTransactionCustomerPayload } from "paymish-typescript-sdk";
+
+const payload: CreateTransactionCustomerPayload = {
+  email: "customer@example.com",
+  firstName: "Ada",
+  lastName: "Okafor",
+  phoneNumber: "08012345678",
+};
+
+const created = await paymish.transactionCustomer.createCustomer(payload, {
+  headers: { Authorization: "Bearer YOUR_TOKEN" },
 });
 ```
 
-#### `updateCustomer(identifier, payload, [options])`
+#### `getCustomerById(identifier, options?)`
 
-Updates an existing transaction customer by ID.
+Retrieves transaction customer details by ID or an object containing `id` or `customerId`.
 
-- `identifier (string | number | Object, Required)` — Customer ID or options object.
-- `payload (Object, Required)` — Updated customer properties.
-- `options (Object, Optional)` — Custom per-request options.
+- **Endpoint:** `GET /api/transaction-service/external/v1/customers/{id}`
+- `identifier: TransactionCustomerIdentifierInput` **(Required)** — Customer ID (`string | number`) or an object containing `id` or `customerId`.
+- `options?: RequestOptions` **(Optional)** — Custom headers, `idempotencyKey`, or `customTimeout`.
+- **Returns:** `Promise<ApiResponse<TransactionCustomerRecord>>`
 
 ```javascript
-await paymish.transactionCustomer.updateCustomer(
-  "tx_cust_123",
-  { firstName: "Jonathan" },
-  { headers: { Authorization: "Bearer YOUR_SECRET_KEY" } },
+const customer = await paymish.transactionCustomer.getCustomerById("cust_123", {
+  headers: { Authorization: "Bearer YOUR_SECRET_KEY" },
+});
+```
+
+#### `updateCustomer(identifier, payload, options?)`
+
+Updates an existing transaction customer by ID or an object containing `id` or `customerId`.
+
+- **Endpoint:** `PUT /api/transaction-service/external/v1/customers/{id}`
+- `identifier: TransactionCustomerIdentifierInput` **(Required)** — Customer ID (`string | number`) or an object containing `id` or `customerId`.
+- `payload: UpdateTransactionCustomerPayload` **(Required)** — Updated customer fields.
+- `options?: RequestOptions` **(Optional)** — Custom headers, `idempotencyKey`, or `customTimeout`.
+- **Returns:** `Promise<ApiResponse<TransactionCustomerRecord>>`
+
+```javascript
+import type { UpdateTransactionCustomerPayload } from "paymish-typescript-sdk";
+
+const updatePayload: UpdateTransactionCustomerPayload = {
+  phoneNumber: "08098765432",
+};
+
+const updated = await paymish.transactionCustomer.updateCustomer(
+  "cust_123",
+  updatePayload,
+  { headers: { Authorization: "Bearer YOUR_TOKEN" } }
 );
 ```
 
