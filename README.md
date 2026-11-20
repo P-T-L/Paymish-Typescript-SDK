@@ -2,8 +2,9 @@
 
 The official TypeScript SDK for integrating with the **Paymish API**. Built with **zero runtime dependencies** using native `fetch`, strict TypeScript types, and dual ESM/CommonJS output via `tsup`.
 
-Official Developer API docs: https://docs.paymish.com/
-Official Swagger API docs: https://api.paymish.com/api/user-service/external/v1/docs/
+**Official Developer API docs:** https://docs.paymish.com/
+
+**Official Swagger API docs:** https://api.paymish.com/api/user-service/external/v1/docs/
 
 ---
 
