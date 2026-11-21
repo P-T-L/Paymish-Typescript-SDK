@@ -442,214 +442,304 @@ const updated = await paymish.transactionCustomer.updateCustomer(
 );
 ```
 
-### DedicatedVirtualAccount Resource (paymish.dedicatedVirtualAccount)
+### DedicatedVirtualAccount Resource (`paymish.dedicatedVirtualAccount`)
 
-#### `createAccount(payload, [options])`
+#### `createAccount(payload, options?)`
 
 Creates a new dedicated virtual account.
 
-- `payload (Object, Required)` — Account creation details payload.
+- **Endpoint:** `POST /api/transaction-service/external/v1/dedicated-virtual-accounts`
+- `payload: CreateDedicatedAccountPayload` **(Required)** — Account creation payload object.
 - `options (Object, Optional)` — Custom per-request options.
+- `options?: RequestOptions` **(Optional)** — Custom headers, `idempotencyKey`, or `customTimeout`.
+- **Returns:** `Promise<ApiResponse<DedicatedVirtualAccountRecord>>`
 
 ```javascript
-const account = await paymish.dedicatedVirtualAccount.createAccount(
-  { customerId: "tx_cust_123", preferredBank: "test-bank" },
-  { headers: { Authorization: "Bearer YOUR_SECRET_KEY" } },
-);
+import type { CreateDedicatedAccountPayload } from "paymish-typescript-sdk";
+
+const payload: CreateDedicatedAccountPayload = {
+  customerId: 42,
+  preferred_bank: "wema-bank",
+};
+
+const created = await paymish.dedicatedVirtualAccount.createAccount(payload, {
+  headers: { Authorization: "Bearer YOUR_TOKEN" },
+});
 ```
 
-#### `listAccounts([params], [options])`
+#### `listAccounts(params?, options?)`
 
 Retrieves a paginated list of dedicated virtual accounts (defaults to `page: 1` and `limit: 10`).
 
-- `params (Object, Optional)` — Query parameters (e.g., `{ page: 1, limit: 10 }`).
-- `options (Object, Optional)` — Custom per-request options.
-
-#### `getAccountByCustomerId(identifier, [options])`
-
-Retrieves a dedicated virtual account by customer ID.
-
-- `identifier (string | number | Object, Required)` — Customer ID or options object containing customerId or id.
-- `options (Object, Optional)` — Custom per-request options.
-
-#### `updateAccountByCustomerId(identifier, payload, [options])`
-
-Updates a dedicated virtual account by customer ID.
-
-- `identifier (string | number | Object, Required)` — Customer ID or options object.
-- `payload (Object, Required)` — Updated account details.
-- `options (Object, Optional)` — Custom per-request options.
-
-#### `requeryAccount(params, [options])`
-
-Requeries the status of a dedicated virtual account.
-
-- `params (Object, Required)`
-  - `account_number (string, Required)` — Account number to requery.
-  - `provider_slug (string, Required)` — Provider slug.
-  - `date (string, Optional)` — Optional date filter.
-- `options (Object, Optional)` — Custom per-request options.
+- **Endpoint:** `GET /api/transaction-service/external/v1/dedicated-virtual-accounts`
+- `params?: ListDedicatedAccountsParams` **(Optional)** — Query parameters such as `page`, `limit`, and `search`.
+- `options?: RequestOptions` **(Optional)** — Custom headers, `idempotencyKey`, or `customTimeout`.
+- **Returns:** `Promise<ApiResponse<DedicatedVirtualAccountRecord[]>>`
 
 ```javascript
-const requeryResult = await paymish.dedicatedVirtualAccount.requeryAccount(
-  { account_number: "1234567890", provider_slug: "test-provider" },
-  { headers: { Authorization: "Bearer YOUR_SECRET_KEY" } },
+const accounts = await paymish.dedicatedVirtualAccount.listAccounts(
+  { page: 1, limit: 10 },
+  { headers: { Authorization: "Bearer YOUR_TOKEN" } },
 );
 ```
 
-#### `assignAccount(payload, [options])`
+#### `getAccountByCustomerId(identifier, options?)`
+
+Retrieves a dedicated virtual account by customer ID or an object containing `customerId` or `id`.
+
+- **Endpoint:** `GET /api/transaction-service/external/v1/dedicated-virtual-accounts/{customerId}`
+- `identifier: DedicatedAccountIdentifierInput` **(Required)** — Customer ID (`string | number`) or an object containing `customerId` or `id`.
+- `options?: RequestOptions` **(Optional)** — Custom headers, `idempotencyKey`, or `customTimeout`.
+- **Returns:** `Promise<ApiResponse<DedicatedVirtualAccountRecord>>`
+
+```javascript
+const account = await paymish.dedicatedVirtualAccount.getAccountByCustomerId(
+  42,
+  {
+    headers: { Authorization: "Bearer YOUR_TOKEN" },
+  },
+);
+```
+
+#### `updateAccountByCustomerId(identifier, payload, options?)`
+
+Updates a dedicated virtual account by customer ID or an object containing `customerId` or `id`.
+
+- **Endpoint:** `PUT /api/transaction-service/external/v1/dedicated-virtual-accounts/{customerId}`
+- `identifier: DedicatedAccountIdentifierInput` **(Required)** — Customer ID (`string | number`) or an object containing `customerId` or `id`.
+- `payload: UpdateDedicatedAccountPayload` **(Required)** — Updated account payload object.
+- `options?: RequestOptions` **(Optional)** — Custom headers, `idempotencyKey`, or `customTimeout`.
+- **Returns:** `Promise<ApiResponse<DedicatedVirtualAccountRecord>>`
+
+```javascript
+import type { UpdateDedicatedAccountPayload } from "paymish-typescript-sdk";
+
+const updatePayload: UpdateDedicatedAccountPayload = {
+  active: false,
+};
+
+const updated = await paymish.dedicatedVirtualAccount.updateAccountByCustomerId(
+  42,
+  updatePayload,
+  { headers: { Authorization: "Bearer YOUR_TOKEN" } }
+);
+```
+
+#### `requeryAccount(params, options?)`
+
+Requeries the status of a dedicated virtual account.
+
+- **Endpoint:** `GET /api/transaction-service/external/v1/dedicated-virtual-accounts/requery`
+- `params: RequeryDedicatedAccountParams` **(Required)**
+  - `account_number: string` — The account number to requery.
+  - `provider_slug: string` — The bank provider slug (e.g., `gtb`, `zenith`, `wema-bank`).
+  - `date?: string` — Optional date filter.
+- `options?: RequestOptions` **(Optional)** — Custom headers, `idempotencyKey`, or `customTimeout`.
+- **Returns:** `Promise<ApiResponse<DedicatedVirtualAccountRecord>>`
+
+```javascript
+import type { RequeryDedicatedAccountParams } from "paymish-typescript-sdk";
+
+const params: RequeryDedicatedAccountParams = {
+  account_number: "0123456789",
+  provider_slug: "wema-bank",
+  date: "2026-11-20",
+};
+
+const requeryResult = await paymish.dedicatedVirtualAccount.requeryAccount(params, {
+  headers: { Authorization: "Bearer YOUR_TOKEN" },
+});
+```
+
+#### `assignAccount(payload, options?)`
 
 Assigns a dedicated virtual account.
 
-- `payload (Object, Required)`
-  - `email (string, Required)` — Customer email.
-  - `first_name (string, Required)` — Customer first name.
-  - `last_name (string, Required)` — Customer last name.
-  - `phone (string, Required)` — Customer phone number.
-- `options (Object, Optional)` — Custom per-request options.
+- **Endpoint:** `POST /api/transaction-service/external/v1/dedicated-virtual-accounts/assign`
+- `payload: AssignDedicatedAccountPayload` **(Required)**
+  - `first_name: string` — Customer first name.
+  - `last_name: string` — Customer last name.
+  - `email: string` — Customer email address.
+  - `phone: string` — Customer phone number.
+- `options?: RequestOptions` **(Optional)** — Custom headers, `idempotencyKey`, or `customTimeout`.
+- **Returns:** `Promise<ApiResponse<DedicatedVirtualAccountRecord>>`
 
 ```javascript
-const assigned = await paymish.dedicatedVirtualAccount.assignAccount(
-  {
-    email: "jane.doe@example.com",
-    first_name: "Jane",
-    last_name: "Doe",
-    phone: "+2348012345678",
-  },
-  { headers: { Authorization: "Bearer YOUR_SECRET_KEY" } },
-);
+import type { AssignDedicatedAccountPayload } from "paymish-typescript-sdk";
+
+const assignPayload: AssignDedicatedAccountPayload = {
+  first_name: "Ada",
+  last_name: "Okafor",
+  email: "ada@example.com",
+  phone: "08012345678",
+};
+
+const assigned = await paymish.dedicatedVirtualAccount.assignAccount(assignPayload, {
+  headers: { Authorization: "Bearer YOUR_TOKEN" },
+});
 ```
 
 ### Dispute Resource (paymish.dispute)
 
-#### `createDispute(payload, [options])`
+#### `createDispute(payload, options?)`
 
-Creates a dispute by uploading a document (evidence image) and providing transaction details using multipart form-data.
+Creates a dispute by uploading evidence or submitting dispute details (automatically converts plain objects into `FormData`).
 
-- `payload (Object \| FormData, Required)`
-  - `transactionRef (string, Required)` — The reference of the transaction for which the dispute is being raised.
-  - `disputeReason (string, Required)` — The reason for raising the dispute.
-  - `disputeDescription (string, Required)` — Detailed description of the dispute.
-  - `image (any, Required)` — The file or stream to be uploaded (dispute evidence image).
-- `options (Object, Optional)` — Custom per-request configuration options.
-
-```javascript
-const dispute = await paymish.dispute.createDispute(
-  {
-    transactionRef: "PM-TX-12345",
-    disputeReason: "Unauthorized charge",
-    disputeDescription: "Customer did not authorize this transaction.",
-    image: fs.createReadStream("evidence.png"),
-  },
-  { headers: { Authorization: "Bearer YOUR_SECRET_KEY" } },
-);
-```
-
-#### `listDisputes([params], [options])`
-
-Retrieves a paginated list of disputes.
-
-- `params (Object, Optional)`
-  - `limit (number, Optional)` — Maximum number of disputes per page (default: `10`).
-  - `page (number, Optional)` — The page number to retrieve (default: `1`).
-  - `search (string, Optional)` — Search string to filter disputes by transaction reference or customer details.
-- `options (Object, Optional)` — Custom per-request options.
+- **Endpoint:** `POST /api/dispute-service/external/v1/create-dispute`
+- `payload: CreateDisputeInput` **(`FormData | CreateDisputeObjectPayload`, Required)**
+  - `transactionRef: string` — Transaction reference for the dispute.
+  - `disputeReason: string` — Reason for raising the dispute.
+  - `disputeDescription: string` — Detailed description of the dispute.
+  - `image?: DisputeEvidenceFile` — Optional evidence file (`Blob`, `File`, stream, or other supported upload value).
+- `options?: RequestOptions` **(Optional)** — Custom headers, `idempotencyKey`, or `customTimeout`.
+- **Returns:** `Promise<ApiResponse<DisputeRecord>>`
 
 ```javascript
-const disputes = await paymish.dispute.listDisputes(
-  { limit: 10, page: 1, search: "PM-TX-12345" },
-  { headers: { Authorization: "Bearer YOUR_SECRET_KEY" } },
-);
-```
+import type { CreateDisputeObjectPayload } from "paymish-typescript-sdk";
 
-#### `getDisputeDetails(transactionRef, [options])`
+const payload: CreateDisputeObjectPayload = {
+  transactionRef: "TXN_REF_12345",
+  disputeReason: "duplicate_charge",
+  disputeDescription: "Customer was debited twice for the same order.",
+};
 
-Retrieves dispute details by transaction reference.
-
-- `transactionRef (string \| Object, Required)` — The transaction reference string or an object containing `{ transactionRef }`.
-- `options (Object, Optional)` — Custom per-request options.
-
-```javascript
-const details = await paymish.dispute.getDisputeDetails("PM-TX-12345", {
-  headers: { Authorization: "Bearer YOUR_SECRET_KEY" },
+const created = await paymish.dispute.createDispute(payload, {
+  headers: { Authorization: "Bearer YOUR_TOKEN" },
 });
 ```
 
-#### `updateDispute(payload, [options])`
+#### `listDisputes(params?, options?)`
+
+Retrieves a paginated list of disputes (defaults to `limit: 10` and `page: 1`).
+
+- **Endpoint:** `GET /api/dispute-service/external/v1/list`
+- `params?: ListDisputesParams` **(Optional)** — Query parameters such as `limit`, `page`, and `search`.
+- `options?: RequestOptions` **(Optional)** — Custom headers, `idempotencyKey`, or `customTimeout`.
+- **Returns:** `Promise<ApiResponse<DisputeRecord[]>>`
+
+```javascript
+const disputes = await paymish.dispute.listDisputes(
+  { page: 1, limit: 10, search: "TXN_REF_12345" },
+  { headers: { Authorization: "Bearer YOUR_TOKEN" } },
+);
+```
+
+#### `getDisputeDetails(transactionRef, options?)`
+
+Retrieves dispute details by transaction reference string or an object containing `transactionRef` or `reference`.
+
+- **Endpoint:** `GET /api/dispute-service/external/v1/dispute-details`
+- `transactionRef: DisputeReferenceInput` **(Required)** — Transaction reference string or reference object.
+- `options?: RequestOptions` **(Optional)** — Custom headers, `idempotencyKey`, or `customTimeout`.
+- **Returns:** `Promise<ApiResponse<DisputeRecord>>`
+
+```javascript
+const dispute = await paymish.dispute.getDisputeDetails("TXN_REF_12345", {
+  headers: { Authorization: "Bearer YOUR_TOKEN" },
+});
+```
+
+#### `updateDispute(payload, options?)`
 
 Updates an existing dispute record.
 
-- `payload (Object, Required)`
-  - `tnxRef (string, Required)` — The transaction reference.
-  - `reason (string, Required)` — The reason for the update.
-  - `status (string, Required)` — The new status of the dispute (e.g., `resolved`, `pending`).
-- `options (Object, Optional)` — Custom per-request options.
+- **Endpoint:** `PUT /api/dispute-service/external/v1/update-dispute`
+- `payload: UpdateDisputePayload` **(Required)**
+  - `tnxRef: string` — Transaction reference for the dispute.
+  - `reason: string` — Reason for the update.
+  - `status: string` — Updated dispute status.
+- `options?: RequestOptions` **(Optional)** — Custom headers, `idempotencyKey`, or `customTimeout`.
+- **Returns:** `Promise<ApiResponse<DisputeRecord>>`
 
 ```javascript
-const updated = await paymish.dispute.updateDispute(
-  {
-    tnxRef: "PM-TX-12345",
-    reason: "Merchant accepted liability",
-    status: "resolved",
-  },
-  { headers: { Authorization: "Bearer YOUR_SECRET_KEY" } },
-);
+import type { UpdateDisputePayload } from "paymish-typescript-sdk";
+
+const updatePayload: UpdateDisputePayload = {
+  tnxRef: "TXN_REF_12345",
+  reason: "Submitted additional proof of delivery",
+  status: "in_review",
+};
+
+const updated = await paymish.dispute.updateDispute(updatePayload, {
+  headers: { Authorization: "Bearer YOUR_TOKEN" },
+});
 ```
 
 ### TransactionDisputes Resource (`paymish.transactionDisputes`)
 
-#### `listDisputes([options])`
+#### `listDisputes(options?)`
 
 Retrieves the list of transaction-level disputes.
 
-- `options (Object, Optional)` — Custom per-request configuration options (e.g., headers containing `Authorization`).
+- **Endpoint:** `GET /api/transaction-service/external/v1/disputes`
+- `options?: RequestOptions` **(Optional)** — Custom headers, `idempotencyKey`, or `customTimeout`.
+- **Returns:** `Promise<ApiResponse<TransactionDisputeRecord[]>>`
 
 ```javascript
 const disputes = await paymish.transactionDisputes.listDisputes({
-  headers: { Authorization: "Bearer YOUR_SECRET_KEY" },
+  headers: { Authorization: "Bearer YOUR_TOKEN" },
 });
 ```
 
-#### `createDispute([payload], [options])`
+#### `createDispute(payload?, options?)`
 
 Creates a new transaction-level dispute.
 
-- `payload (Object, Optional)` — Dispute creation details payload.
-- `options (Object, Optional)` — Custom per-request options.
+- **Endpoint:** `POST /api/transaction-service/external/v1/disputes`
+- `payload?: CreateTransactionDisputePayload` **(Optional)** — Dispute creation payload object (defaults to `{}`).
+- `options?: RequestOptions` **(Optional)** — Custom headers, `idempotencyKey`, or `customTimeout`.
+- **Returns:** `Promise<ApiResponse<TransactionDisputeRecord>>`
 
 ```javascript
-const newDispute = await paymish.transactionDisputes.createDispute(
-  { transactionId: "tx_123", reason: "fraud" },
-  { headers: { Authorization: "Bearer YOUR_SECRET_KEY" } },
-);
-```
+import type { CreateTransactionDisputePayload } from "paymish-typescript-sdk";
 
-#### `getDisputeById(disputeId, [options])`
+const payload: CreateTransactionDisputePayload = {
+  transactionRef: "TXN_REF_12345",
+  reason: "Customer claims goods not delivered",
+};
 
-Retrieves a transaction-level dispute by its ID.
-
-- `disputeId (string \| number \| Object, Required)` — The dispute ID string/number or options object.
-- `options (Object, Optional)` — Custom per-request options.
-
-```javascript
-const dispute = await paymish.transactionDisputes.getDisputeById("disp_123", {
-  headers: { Authorization: "Bearer YOUR_SECRET_KEY" },
+const created = await paymish.transactionDisputes.createDispute(payload, {
+  headers: { Authorization: "Bearer YOUR_TOKEN" },
 });
 ```
 
-#### `updateDispute(disputeId, payload, [options])`
+#### `getDisputeById(disputeId, options?)`
 
-Updates an existing transaction-level dispute by its ID.
+Retrieves a transaction-level dispute by its ID or an object containing `disputeId` or `id`.
 
-- `disputeId (string \| number \| Object, Required)` — The dispute ID string/number or options object.
-- `payload (Object, Required)` — Update payload containing updated dispute details.
-- `options (Object, Optional)` — Custom per-request options.
+- **Endpoint:** `GET /api/transaction-service/external/v1/disputes/{id}`
+- `disputeId: TransactionDisputeIdentifierInput` **(Required)** — Dispute ID (`string | number`) or an object containing `disputeId` or `id`.
+- `options?: RequestOptions` **(Optional)** — Custom headers, `idempotencyKey`, or `customTimeout`.
+- **Returns:** `Promise<ApiResponse<TransactionDisputeRecord>>`
 
 ```javascript
-const updatedDispute = await paymish.transactionDisputes.updateDispute(
-  "disp_123",
-  { status: "resolved", resolutionNote: "Refund issued" },
-  { headers: { Authorization: "Bearer YOUR_SECRET_KEY" } },
+const dispute = await paymish.transactionDisputes.getDisputeById(101, {
+  headers: { Authorization: "Bearer YOUR_TOKEN" },
+});
+```
+
+#### `updateDispute(disputeId, payload, options?)`
+
+Updates an existing transaction-level dispute by its ID or an object containing `disputeId` or `id`.
+
+- **Endpoint:** `PUT /api/transaction-service/external/v1/disputes/{id}`
+- `disputeId: TransactionDisputeIdentifierInput` **(Required)** — Dispute ID (`string | number`) or an object containing `disputeId` or `id`.
+- `payload: UpdateTransactionDisputePayload` **(Required)** — Updated dispute fields.
+- `options?: RequestOptions` **(Optional)** — Custom headers, `idempotencyKey`, or `customTimeout`.
+- **Returns:** `Promise<ApiResponse<TransactionDisputeRecord>>`
+
+```javascript
+import type { UpdateTransactionDisputePayload } from "paymish-typescript-sdk";
+
+const updatePayload: UpdateTransactionDisputePayload = {
+  status: "resolved",
+  reason: "Refund issued to customer",
+};
+
+const updated = await paymish.transactionDisputes.updateDispute(
+  101,
+  updatePayload,
+  { headers: { Authorization: "Bearer YOUR_TOKEN" } }
 );
 ```
 
