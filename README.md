@@ -745,89 +745,114 @@ const updated = await paymish.transactionDisputes.updateDispute(
 
 ### InitializeCheckout Resource (`paymish.initializeCheckout`)
 
-#### `initializeTransaction(payload, [options])`
+#### `initializeTransaction(payload, options?)`
 
-Initializes a standard checkout transaction from your backend.
+Initializes a payment transaction.
 
-- `payload (Object, Required)`
-  - `email (string, Required)` — Customer's email address.
-  - `amount (string \| number, Required)` — Amount in currency subunits (e.g. kobo/cents).
-- `options (Object, Optional)` — Custom per-request options.
+- **Endpoint:** `POST /api/transaction-service/external/v1/transaction-initialize`
+- `payload: InitializeTransactionPayload` **(Required)**
+  - `email: string` — Customer's email address.
+  - `amount: CheckoutAmount` (`string | number`) — Amount in currency subunits (e.g., kobo or cents).
+- `options?: RequestOptions` **(Optional)** — Custom headers, `idempotencyKey`, or `customTimeout`.
+- **Returns:** `Promise<ApiResponse<InitializedCheckoutData>>`
 
 ```javascript
-const response = await paymish.initializeCheckout.initializeTransaction(
-  { email: "customer@email.com", amount: 10000 },
-  { headers: { Authorization: "Bearer YOUR_SECRET_KEY" } },
-);
+import type { InitializeTransactionPayload } from "paymish-typescript-sdk";
+
+const payload: InitializeTransactionPayload = {
+  email: "customer@example.com",
+  amount: 500000,
+};
+
+const initialized = await paymish.initializeCheckout.initializeTransaction(payload, {
+  headers: { Authorization: "Bearer YOUR_TOKEN" },
+});
 ```
 
-#### `initializeDva(payload, [options])`
+#### `initializeDva(payload, options?)`
 
-Initializes a transaction and gets back a one-time Dynamic Virtual Account (bank transfer) synchronously.
+Initializes a transaction with a Dynamic Virtual Account (DVA).
 
-- `payload (Object, Required)`
-  - `email (string, Required)` — Customer's email address.
-  - `amount (string \| number, Required)` — Amount in currency subunits.
-  - `reference (string, Optional)` — Optional unique reference for this transaction (auto-generated if omitted).
-- `options (Object, Optional)` — Custom per-request options.
+- **Endpoint:** `POST /api/transaction-service/external/v1/transaction-initialize/dva`
+- `payload: InitializeDvaPayload` **(Required)**
+  - `email: string` — Customer's email address.
+  - `amount: CheckoutAmount` (`string | number`) — Amount in currency subunits (e.g., kobo or cents).
+  - `reference?: string` — Optional unique transaction reference.
+- `options?: RequestOptions` **(Optional)** — Custom headers, `idempotencyKey`, or `customTimeout`.
+- **Returns:** `Promise<ApiResponse<InitializedCheckoutData>>`
 
 ```javascript
-const dvaResponse = await paymish.initializeCheckout.initializeDva(
-  { email: "customer@email.com", amount: 10000, reference: "my_ref_123" },
-  { headers: { Authorization: "Bearer YOUR_SECRET_KEY" } },
-);
+import type { InitializeDvaPayload } from "paymish-typescript-sdk";
+
+const dvaPayload: InitializeDvaPayload = {
+  email: "customer@example.com",
+  amount: 250000,
+  reference: "TXN_DVA_001",
+};
+
+const dvaSession = await paymish.initializeCheckout.initializeDva(dvaPayload, {
+  headers: { Authorization: "Bearer YOUR_TOKEN" },
+});
 ```
 
 ### Invoices Resource (`paymish.invoices`)
 
-#### `createInvoice(payload, [options])`
+#### `createInvoice(payload, options?)`
 
 Creates a new invoice.
 
-- `payload (Object, Required)`
-  - `customerEmail (string, Required)` — Customer's email address.
-  - `amount (number, Required)` — Invoice amount.
-  - `note (string, Optional)` — Optional invoice note.
-  - `sendImmediately (boolean, Optional)` — Defaults to true. When false, the invoice is created as a Draft.
-- `options (Object, Optional)` — Custom per-request options.
+- **Endpoint:** `POST /api/payment-service/external/v1/invoices`
+- `payload: CreateInvoicePayload` **(Required)**
+  - `customerEmail: string` — Customer's email address.
+  - `amount: number` — Invoice amount.
+  - `note?: string` — Optional invoice note.
+  - `sendImmediately?: boolean` — Defaults to `true`. When `false`, the invoice is created as a draft and not emailed.
+- `options?: RequestOptions` **(Optional)** — Custom headers, `idempotencyKey`, or `customTimeout`.
+- **Returns:** `Promise<ApiResponse<InvoiceRecord>>`
 
 ```javascript
-const invoice = await paymish.invoices.createInvoice(
-  { customerEmail: "customer@email.com", amount: 5000 },
-  { headers: { Authorization: "Bearer YOUR_SECRET_KEY" } },
-);
+import type { CreateInvoicePayload } from "paymish-typescript-sdk";
+
+const payload: CreateInvoicePayload = {
+  customerEmail: "billing@example.com",
+  amount: 50000,
+  note: "Monthly retainer invoice",
+  sendImmediately: true,
+};
+
+const created = await paymish.invoices.createInvoice(payload, {
+  headers: { Authorization: "Bearer YOUR_TOKEN" },
+});
 ```
 
-#### `listInvoices([params], [options])`
+#### `listInvoices(params?, options?)`
 
-Retrieves a paginated list of invoices with optional query filters.
+Retrieves a paginated list of invoices with optional filters.
 
-- `params (Object, Optional)`
-  - `status (string, Optional)` — Filter by invoice status.
-  - `startDate (string, Optional)` — Filter by start date (`YYYY-MM-DD`).
-  - `endDate (string, Optional)` — Filter by end date (`YYYY-MM-DD`).
-  - `search (string, Optional)` — Search by invoice ID or customer name/email.
-  - `page (number, Optional)` — Page number.
-  - `limit (number, Optional)` — Number of items per page.
-- `options (Object, Optional)` — Custom per-request options.
+- **Endpoint:** `GET /api/payment-service/external/v1/invoices`
+- `params?: ListInvoicesParams` **(Optional)** — Query parameters including `status`, `startDate`, `endDate`, `search`, `page`, and `limit`.
+- `options?: RequestOptions` **(Optional)** — Custom headers, `idempotencyKey`, or `customTimeout`.
+- **Returns:** `Promise<ApiResponse<InvoiceRecord[]>>`
 
 ```javascript
 const invoices = await paymish.invoices.listInvoices(
   { status: "paid", page: 1, limit: 10 },
-  { headers: { Authorization: "Bearer YOUR_SECRET_KEY" } },
+  { headers: { Authorization: "Bearer YOUR_TOKEN" } },
 );
 ```
 
-#### `getInvoiceById(invoiceId, [options])`
+#### `getInvoiceById(invoiceId, options?)`
 
-Retrieves a single invoice by its ID.
+Retrieves a single invoice by its ID or an object containing invoiceId or id.
 
-- `invoiceId (string \| number \| Object, Required)` — The invoice ID string/number or options object.
-- `options (Object, Optional)` — Custom per-request options.
+- **Endpoint:** `GET /api/payment-service/external/v1/invoices/{id}`
+- `invoiceId: InvoiceIdentifierInput` **(Required)** — Invoice ID (`string | number`) or an object containing `invoiceId` or `id`.
+- `options?: RequestOptions` **(Optional)** — Custom headers, `idempotencyKey`, or `customTimeout`.
+- **Returns:** `Promise<ApiResponse<InvoiceRecord>>`
 
 ```javascript
-const invoice = await paymish.invoices.getInvoiceById("PM-REF-12345", {
-  headers: { Authorization: "Bearer YOUR_SECRET_KEY" },
+const invoice = await paymish.invoices.getInvoiceById(75, {
+  headers: { Authorization: "Bearer YOUR_TOKEN" },
 });
 ```
 
