@@ -858,200 +858,260 @@ const invoice = await paymish.invoices.getInvoiceById(75, {
 
 ### PaymentPages Resource (`paymish.paymentPages`)
 
-#### `checkCustomLinkExists(payload, [options])`
+#### `checkCustomLinkExists(payload, options?)`
 
-Checks if a custom payment page link exists or is available.
+Checks if a custom payment page slug/link already exists.
 
-- `payload (Object | string, Required)` — Payload containing `customLink` or a direct link string.
-- `options (Object, Optional)` — Custom per-request options.
-
-```javascript
-const result = await paymish.paymentPages.checkCustomLinkExists(
-  {
-    customLink: "https://example.com/my-custom-link",
-  },
-  {
-    headers: { Authorization: "Bearer YOUR_SECRET_KEY" },
-  },
-);
-```
-
-#### `createPaymentPage(payload, [options])`
-
-Creates a new payment page.
-
-- `payload (Object, Required)` — Payment page creation details.
-- `options (Object, Optional)` — Custom per-request options.
+- **Endpoint:** `POST /api/payment-service/external/v1/payment-pages/custom-link-check-exist`
+- `payload: CheckCustomLinkExistsPayload` **(Required)**
+  - `customLink: string` — Custom link identifier to check.
+- `options?: RequestOptions` **(Optional)** — Custom headers, `idempotencyKey`, or `customTimeout`.
+- **Returns:** `Promise<ApiResponse<Record<string, unknown>>>`
 
 ```javascript
-const page = await paymish.paymentPages.createPaymentPage(
-  {
-    title: "Summer Collection",
-    description: "Checkout for summer items",
-    amount: 15000,
-    customLink: "https://example.com/summer-sale",
-  },
-  { headers: { Authorization: "Bearer YOUR_SECRET_KEY" } },
-);
+import type { CheckCustomLinkExistsPayload } from "paymish-typescript-sdk";
+
+const payload: CheckCustomLinkExistsPayload = {
+  customLink: "monthly-tuition",
+};
+
+const linkCheck = await paymish.paymentPages.checkCustomLinkExists(payload, {
+  headers: { Authorization: "Bearer YOUR_TOKEN" },
+});
 ```
 
-#### `getPaymentPages([params], [options])`
+#### `createPaymentPage(payload, options?)`
 
-Retrieves a list of payment pages.
+Creates a new payment page from a `FormData` instance or plain object (automatically converts plain objects to `FormData` and appends array values as `${key}[]`).
 
-- `params (Object, Optional)` — Query parameters for filtering and pagination.
-- `options (Object, Optional)` — Custom per-request options.
+- **Endpoint:** `POST /api/payment-service/external/v1/payment-pages/create-pages`
+- `payload: CreatePaymentPageInput` **(`FormData | CreatePaymentPageObjectPayload`, Required)**
+  - `businessId: number` — Target business identifier.
+  - `pageName: string` — Name of the payment page.
+- `options?: RequestOptions` **(Optional)** — Custom headers, `idempotencyKey`, or `customTimeout`.
+- **Returns:** `Promise<ApiResponse<PaymentPageRecord>>`
+
+```javascript
+import type { CreatePaymentPageObjectPayload } from "paymish-typescript-sdk";
+
+const payload: CreatePaymentPageObjectPayload = {
+  businessId: 10,
+  pageName: "Event Registration",
+};
+
+const created = await paymish.paymentPages.createPaymentPage(payload, {
+  headers: { Authorization: "Bearer YOUR_TOKEN" },
+});
+```
+
+#### `getPaymentPages(params?, options?)`
+
+Retrieves a paginated list of payment pages with optional `filter` and `sort` parameters.
+
+**Endpoint:** `GET /api/payment-service/external/v1/payment-pages/get-pages`
+
+- `params?: GetPaymentPagesParams` **(Optional)** — Query parameters including `status`, `searchPageText`, `startDate`, `endDate`, `page`, `limit`, and `sort`.
+- `options?: RequestOptions` **(Optional)** — Custom headers, `idempotencyKey`, or `customTimeout`.
+- **Returns:** `Promise<ApiResponse<PaymentPageRecord[]>>`
 
 ```javascript
 const pages = await paymish.paymentPages.getPaymentPages(
-  { page: 1, limit: 10 },
-  { headers: { Authorization: "Bearer YOUR_SECRET_KEY" } },
+  { status: "Published", page: 1, limit: 10, sort: "DESC" },
+  { headers: { Authorization: "Bearer YOUR_TOKEN" } },
 );
 ```
 
-#### `getPageDetails(identifier, [options])`
+#### `getPageDetails(identifier, options?)`
 
-Retrieves detailed information for a specific payment page.
+Retrieves details for a specific payment page by ID or an object containing `pageId` or `id`.
 
-- `identifier (string | number | Object, Required)` — Page ID, reference, or options object.
-- `options (Object, Optional)` — Custom per-request options.
+- **Endpoint:** `GET /api/payment-service/external/v1/payment-pages/get-page-details`
+- `params: PaymentPageDetailsInput` **(Required)** — Payment page ID (`number | string`) or an object containing `pageId` or `id`.
+- `options?: RequestOptions` **(Optional)** — Custom headers, `idempotencyKey`, or `customTimeout`.
+- **Returns:** `Promise<ApiResponse<PaymentPageRecord>>`
 
 ```javascript
-const details = await paymish.paymentPages.getPageDetails("page_ref_123", {
-  headers: { Authorization: "Bearer YOUR_SECRET_KEY" },
+const pageDetails = await paymish.paymentPages.getPageDetails(
+  { pageId: 15 },
+  { headers: { Authorization: "Bearer YOUR_TOKEN" } },
+);
+```
+
+#### `updatePaymentPage(payload, options?)`
+
+Updates an existing payment page using a `FormData` instance or plain object containing `pageId` or `id`.
+
+**Endpoint:** `PUT /api/payment-service/external/v1/payment-pages/update-page-details`
+
+- `payload: UpdatePaymentPageInput` **(`FormData | UpdatePaymentPageObjectPayload`, Required)**
+  - `pageId?: PaymentPageId` — Payment page identifier (`number | string`).
+  - `pageName?: string` — Updated payment page name.
+- `options?: RequestOptions` **(Optional)** — Custom headers, `idempotencyKey`, or `customTimeout`.
+- **Returns:** `Promise<ApiResponse<PaymentPageRecord>>`
+
+```javascript
+import type { UpdatePaymentPageObjectPayload } from "paymish-typescript-sdk";
+
+const updatePayload: UpdatePaymentPageObjectPayload = {
+  pageId: 15,
+  pageName: "Updated Event Registration",
+};
+
+const updated = await paymish.paymentPages.updatePaymentPage(updatePayload, {
+  headers: { Authorization: "Bearer YOUR_TOKEN" },
 });
 ```
 
-#### `updatePaymentPage(payload, [options])`
+#### `updatePageStatus(payload, options?)`
 
-Updates details for an existing payment page.
+Updates the publication status of a payment page.
 
-- `payload (Object, Required)` — Update details payload containing page identifiers and fields to update.
-- `options (Object, Optional)` — Custom per-request options.
-
-```javascript
-await paymish.paymentPages.updatePaymentPage(
-  { pageId: 123, title: "Updated Title" },
-  { headers: { Authorization: "Bearer YOUR_SECRET_KEY" } },
-);
-```
-
-#### `updatePageStatus(payload, [options])`
-
-Updates the active or published status of a payment page.
-
-- `payload (Object, Required)` — Status update payload.
-- `options (Object, Optional)` — Custom per-request options.
+- **Endpoint:** `PUT /api/payment-service/external/v1/payment-pages/update-page-status`
+- `payload: UpdatePageStatusPayload (Required)`
+  - `pageId: PaymentPageId` (`number | string`) — Payment page identifier.
+  - `status: string` — Target status (e.g., `"Published"`, `"Unpublished"`).
+- `options?: RequestOptions` **(Optional)** — Custom headers, `idempotencyKey`, or `customTimeout`.
+- **Returns:** `Promise<ApiResponse<PaymentPageRecord>>`
 
 ```javascript
 await paymish.paymentPages.updatePageStatus(
-  { pageId: 123, status: "active" },
-  { headers: { Authorization: "Bearer YOUR_SECRET_KEY" } },
+  { pageId: 15, status: "Published" },
+  { headers: { Authorization: "Bearer YOUR_TOKEN" } },
 );
 ```
 
-#### `deletePage(payload, [options])`
+#### `deletePage(payload, options?)`
 
-Deletes a payment page.
+Marks a payment page as deleted or updates its deletion flag.
 
-- `payload (Object | string | number, Required)` — Page ID or payload containing the page identifier.
-- `options (Object, Optional)` — Custom per-request options.
+- **Endpoint:** `POST /api/payment-service/external/v1/payment-pages/delete-page`
+- `payload: DeletePagePayload` **(Required)**
+  - `pageId: PaymentPageId` (`number | string`) — Payment page identifier.
+  - `isDeleted: boolean` — Deletion flag.
+- `options?: RequestOptions` **(Optional)** — Custom headers, `idempotencyKey`, or `customTimeout`.
+- **Returns:** `Promise<ApiResponse<PaymentPageRecord>>`
 
 ```javascript
-await paymish.paymentPages.deletePage(123, {
-  headers: { Authorization: "Bearer YOUR_SECRET_KEY" },
+await paymish.paymentPages.deletePage(
+  { pageId: 15, isDeleted: true },
+  { headers: { Authorization: "Bearer YOUR_TOKEN" } },
+);
+```
+
+#### `getAssociatedProducts(identifier, options?)`
+
+Retrieves products associated with a payment page, with optional product search filtering.
+
+- **Endpoint:** `GET /api/payment-service/external/v1/payment-pages/payment-page-get-product`
+- `params: GetAssociatedProductsInput` **(Required)** — Payment page ID (`number | string`) or an object containing `pageId` or `id` and optional `searchProduct`.
+- `options?: RequestOptions` **(Optional)** — Custom headers, `idempotencyKey`, or `customTimeout`.
+- **Returns:** `Promise<ApiResponse<PaymentPageRecord[]>>`
+
+```javascript
+const products = await paymish.paymentPages.getAssociatedProducts(
+  { pageId: 15, searchProduct: "Ticket" },
+  { headers: { Authorization: "Bearer YOUR_TOKEN" } },
+);
+```
+
+#### `addProductToPaymentPage(payload, options?)`
+
+Associates one or more products with a payment page (normalizes `productIds` arrays into comma-separated strings).
+
+- **Endpoint:** `POST /api/payment-service/external/v1/payment-pages/payment-page-add-product`
+- `payload: AddProductToPaymentPagePayload` **(Required)**
+  - `pageId?: PaymentPageId` — Payment page identifier.
+  - `productIds: string | Array<number | string>` — Product IDs as a comma-separated string or array.
+- `options?: RequestOptions` **(Optional)** — Custom headers, `idempotencyKey`, or `customTimeout`.
+- **Returns:** `Promise<ApiResponse<PaymentPageRecord>>`
+
+```javascript
+import type { AddProductToPaymentPagePayload } from "paymish-typescript-sdk";
+
+const productPayload: AddProductToPaymentPagePayload = {
+  pageId: 15,
+  productIds: [101, 102],
+};
+
+const added = await paymish.paymentPages.addProductToPaymentPage(productPayload, {
+  headers: { Authorization: "Bearer YOUR_TOKEN" },
 });
 ```
 
-#### `getAssociatedProducts(identifier, [options])`
+#### `deleteProductFromPaymentPage(payload, options?)`
 
-Retrieves products associated with a specific payment page.
+Removes a product association from a payment page.
 
-- `identifier (string | number | Object, Required)` — Page ID or options object.
-- `options (Object, Optional)` — Custom per-request options.
-
-```javascript
-const products = await paymish.paymentPages.getAssociatedProducts(123, {
-  headers: { Authorization: "Bearer YOUR_SECRET_KEY" },
-});
-```
-
-#### `addProductToPaymentPage(payload, [options])`
-
-Adds one or more products to a payment page.
-
-- `payload (Object, Required)`
-  - `pageId (number | string, Required)` — The ID of the payment page.
-  - `productIds (Array | string, Required)` — Product ID(s) to add.
-- `options (Object, Optional)` — Custom per-request options.
+- **Endpoint:** `POST /api/payment-service/external/v1/payment-pages/payment-page-delete-product`
+- `payload: DeleteProductFromPaymentPageInput` **(Required)** — Payment page product ID (`number | string`) or an object containing `paymentPageProductId` or `id`.
+- `options?: RequestOptions` **(Optional)** — Custom headers, `idempotencyKey`, or `customTimeout`.
+- **Returns:** `Promise<ApiResponse<PaymentPageRecord>>`
 
 ```javascript
-await paymish.paymentPages.addProductToPaymentPage(
-  {
-    pageId: 447,
-    productIds: [123, 456, 789],
-  },
-  { headers: { Authorization: "Bearer YOUR_SECRET_KEY" } },
+const deletedProduct = await paymish.paymentPages.deleteProductFromPaymentPage(
+  { paymentPageProductId: 501 },
+  { headers: { Authorization: "Bearer YOUR_TOKEN" } },
 );
 ```
 
-#### `deleteProductFromPaymentPage(payload, [options])`
+#### `initiateCheckoutDynamicVirtualAccount(payload, options?)`
 
-Deletes a product from a payment page.
+Initiates a dynamic virtual account for a payment page checkout session.
 
-- `payload (Object | string | number, Required)` — Payload containing `paymentPageProductId` or direct product ID value.
-- `options (Object, Optional)` — Custom per-request options.
-
-```javascript
-await paymish.paymentPages.deleteProductFromPaymentPage(
-  { paymentPageProductId: 123 },
-  { headers: { Authorization: "Bearer YOUR_SECRET_KEY" } },
-);
-```
-
-#### `initiateCheckoutDynamicVirtualAccount(payload, [options])`
-
-Allocates a one-time dynamic virtual account (bank transfer option) for a checkout session.
-
-- `payload (Object, Required)`
-  - `accessCode (string, Required)` — Checkout session access code.
-  - `amount (number, Required)` — Amount to be paid in Naira.
-  - `email (string, Optional)` — Customer email address.
-  - `pageReference (string, Optional)` — Optional reference.
-- `options (Object, Optional)` — Custom per-request options.
+- **Endpoint:** `POST /api/payment-service/external/v1/payment-pages/initiate-initialize-checkout-dynamic-virtual-account`
+- `payload: InitiateCheckoutDvaPayload` **(Required)**
+  - `accessCode?: string` — Checkout session access code (`access_code` alias also accepted).
+  - `amount: number` — Numeric amount in Naira.
+  - `email?: string` — Optional customer email address.
+  - `pageReference?: string` — Optional page reference (`page_reference` alias also accepted).
+  - `transferSelectedAt?: number` — Optional timestamp in milliseconds when transfer was selected.
+- `options?: RequestOptions` **(Optional)** — Custom headers, `idempotencyKey`, or `customTimeout`.
+- **Returns:** `Promise<ApiResponse<PaymentPageRecord>>`
 
 ```javascript
-const dva = await paymish.paymentPages.initiateCheckoutDynamicVirtualAccount({
-  accessCode: "chk_9f8a7b6c5d4e",
-  amount: 5000,
+import type { InitiateCheckoutDvaPayload } from "paymish-typescript-sdk";
+
+const dvaPayload: InitiateCheckoutDvaPayload = {
+  accessCode: "ACS_98765",
+  amount: 15000,
   email: "customer@example.com",
+  pageReference: "PAGE_REF_01",
+};
+
+const dva = await paymish.paymentPages.initiateCheckoutDynamicVirtualAccount(dvaPayload, {
+  headers: { Authorization: "Bearer YOUR_TOKEN" },
 });
 ```
 
-#### `listPaymentPages([options])`
+#### `listPaymentPages(options?)`
 
-Lists payment pages via the transaction service.
+Retrieves a list of payment pages via the transaction service.
 
-- `options (Object, Optional)` — Custom per-request options.
+- **Endpoint:** `GET /api/transaction-service/external/v1/payment-pages`
+- `options?: RequestOptions` **(Optional)** — Custom headers, `idempotencyKey`, or `customTimeout`.
+- **Returns:** `Promise<ApiResponse<PaymentPageRecord[]>>`
 
 ```javascript
-const transactionPages = await paymish.paymentPages.listPaymentPages({
-  headers: { Authorization: "Bearer YOUR_SECRET_KEY" },
+const txPages = await paymish.paymentPages.listPaymentPages({
+  headers: { Authorization: "Bearer YOUR_TOKEN" },
 });
 ```
 
-#### `createPaymentPageTransactionService(payload, [options])`
+#### `createPaymentPageTransactionService(payload?, options?)`
 
-Creates a payment page via the transaction service endpoint.
+Creates a payment page via the transaction service.
 
-- `payload (Object, Optional)` — Payment page creation payload.
-- `options (Object, Optional)` — Custom per-request options.
+- **Endpoint:** `POST /api/transaction-service/external/v1/payment-pages`
+- `payload?: CreateTransactionPaymentPagePayload` **(Optional)** — Optional payload data (defaults to `{}`).
+- `options?: RequestOptions` **(Optional)** — Custom headers, `idempotencyKey`, or `customTimeout`.
+- **Returns:** `Promise<ApiResponse<PaymentPageRecord>>`
 
 ```javascript
-const txPage = await paymish.paymentPages.createPaymentPageTransactionService(
-  { title: "New Transaction Page" },
-  { headers: { Authorization: "Bearer YOUR_SECRET_KEY" } },
-);
+const createdTxPage =
+  await paymish.paymentPages.createPaymentPageTransactionService(
+    { name: "Quick Checkout Page" },
+    { headers: { Authorization: "Bearer YOUR_TOKEN" } },
+  );
 ```
 
 ### Plans Resource (`paymish.plans`)
