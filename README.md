@@ -1249,7 +1249,7 @@ Retrieves a list of payment plans via the transaction service.
 ```javascript
 const txPlans = await paymish.plans.listPlansTransactionService(
   { page: 1, limit: 10 },
-  { headers: { Authorization: "Bearer YOUR_TOKEN" } }
+  { headers: { Authorization: "Bearer YOUR_TOKEN" } },
 );
 ```
 
@@ -1265,231 +1265,410 @@ Creates a new payment plan via the transaction service.
 ```javascript
 const createdTxPlan = await paymish.plans.createPlanTransactionService(
   { name: "Starter Plan" },
-  { headers: { Authorization: "Bearer YOUR_TOKEN" } }
+  { headers: { Authorization: "Bearer YOUR_TOKEN" } },
 );
 ```
 
 ### Products Resource (`paymish.products`)
 
-#### `createProduct(payload, [options])`
+#### `createProduct(payload, options?)`
 
-Creates a new product (supports multipart form-data for file uploads like product images).
+Creates a new product.
 
-- `payload (Object | FormData, Required)`
-  - `productName (string, Required)` — The name of the product.
-  - `productDescription (string, Required)` — Description of the product.
-  - `price (number | string, Required)` — Product price.
-  - `productType (string, Required)` — Type of product (e.g., `digital`, `physical`).
-  - Other product properties and media files.
-- `options (Object, Optional)` — Custom per-request options.
+- **Endpoint:** `POST /api/payment-service/external/v1/products/create-product`
+- `payload: CreateProductPayload` **(Required)**
+  - `businessId: string | number` — Target business identifier.
+  - `productName: string` — Product name.
+  - `productDescription: string` — Product description.
+  - `productPrice: string | number` — Product price.
+  - `quantityType: string` — Quantity type (e.g., `unit`, `weight`, `Limited`, `Unlimited`).
+  - `quantityStock: number` — Available stock count.
+  - `isPhysical: boolean` — Whether the product is a physical item.
+- `options?: RequestOptions` **(Optional)** — Custom headers, `idempotencyKey`, or `customTimeout`.
+- **Returns:** `Promise<ApiResponse<ProductRecord>>`
 
 ```javascript
-const product = await paymish.products.createProduct(
-  {
-    productName: "E-Book Guide",
-    productDescription: "Learn web development from scratch",
-    price: "2500.00",
-    productType: "digital",
-  },
-  { headers: { Authorization: "Bearer YOUR_SECRET_KEY" } },
-);
+import type { CreateProductPayload } from "paymish-typescript-sdk";
+
+const payload: CreateProductPayload = {
+  businessId: 10,
+  productName: "Wireless Mechanical Keyboard",
+  productDescription: "Compact hot-swappable keyboard",
+  productPrice: "45000",
+  quantityType: "unit",
+  quantityStock: 25,
+  isPhysical: true,
+};
+
+const created = await paymish.products.createProduct(payload, {
+  headers: { Authorization: "Bearer YOUR_TOKEN" },
+});
 ```
 
-#### `getProducts([params], [options])`
+#### `getProducts(params?, options?)`
 
-Retrieves a paginated list of products.
+Retrieves a paginated list of products with optional filter and pagination parameters.
 
-- `params (Object, Optional)` — Optional query parameters for filtering and pagination.
-- `options (Object, Optional)` — Custom per-request options.
+- **Endpoint:** `GET /api/payment-service/external/v1/products/get-products`
+- `params?: GetProductsParams` **(Optional)** — Query parameters including `status`, `quantityType`, `quantityStock`, `quantityStockType`, `productPrice`, `productPriceType`, `searchPlanText`, `startDate`, `endDate`, `limit`, and `page`.
+- `options?: RequestOptions` **(Optional)** — Custom headers, `idempotencyKey`, or `customTimeout`.
+- **Returns:** `Promise<ApiResponse<ProductRecord[]>>`
 
 ```javascript
 const products = await paymish.products.getProducts(
-  { page: 1, limit: 10 },
-  { headers: { Authorization: "Bearer YOUR_SECRET_KEY" } },
+  { status: true, quantityType: "Limited", limit: 10, page: 1 },
+  { headers: { Authorization: "Bearer YOUR_TOKEN" } },
 );
 ```
 
-#### `getProductDetails(identifier, [options])`
+#### `getProductDetails(identifier, options?)`
 
-Retrieves detailed information for a specific product.
+Retrieves detailed information for a specific product by ID or an object containing `productId` or `id`.
 
-- `identifier (string | number | Object, Required)` — Product ID or options object containing `productId` or `id`.
-- `options (Object, Optional)` — Custom per-request options.
+- **Endpoint:** `GET /api/payment-service/external/v1/products/get-product-details`
+- `identifier: ProductIdentifierInput` **(Required)** — Product ID (`string | number`) or an object containing `productId` or `id`.
+- `options?: RequestOptions` **(Optional)** — Custom headers, `idempotencyKey`, or `customTimeout`.
+- **Returns:** `Promise<ApiResponse<ProductRecord>>`
 
 ```javascript
-const details = await paymish.products.getProductDetails("143", {
-  headers: { Authorization: "Bearer YOUR_SECRET_KEY" },
+const product = await paymish.products.getProductDetails("PROD_001", {
+  headers: { Authorization: "Bearer YOUR_TOKEN" },
 });
 ```
 
-#### `updateProduct(payload, [options])`
+#### `updateProductDetails(payload, options?)`
 
-Updates details for an existing product.
+Updates detailed configuration, inventory, checkout, and notification settings for an existing product.
 
-- `payload (Object, Required)`
-  - `productId (string | number, Required)` — The ID of the product to update.
-  - Other updatable fields.
-- `options (Object, Optional)` — Custom per-request options.
+- **Endpoint:** `PUT /api/payment-service/external/v1/products/update-product-details`
+- `payload: UpdateProductDetailsPayload` **(Required)**
+  - `productId: ProductId` (`string | number`) — Product identifier.
+  - `productName: string` — Product name.
+  - `productDescription: string` — Product description.
+  - `productPrice: string | number` — Product price.
+  - `quantityType: string` — Stock quantity type (`Limited` or `Unlimited`).
+  - `quantityStock: number` — Stock quantity.
+  - `minOrder: number` — Minimum order quantity.
+  - `maxOrder: number` — Maximum order quantity.
+  - `lowStockAlert: boolean` — Whether low-stock alerts are enabled.
+  - `notifyStock: number` — Stock threshold for alerts.
+  - `shareableUrl: string` — Shareable product URL.
+  - `productBackgroundColor: string` — Background color hex or value.
+  - `deliveryAddress: string` — Delivery address setting (`Disabled` or `Required`).
+  - `deliveryNote: string` — Delivery note setting (`Disabled`, `Required`, or `Optional`).
+  - `redirectAfterPaymentLink: string` — Redirect URL after payment.
+  - `successMessage: string` — Post-payment confirmation message.
+  - `sendNotification: string` — Notification setting.
+  - `isActive: boolean` — Whether the product is active.
+- `options?: RequestOptions` **(Optional)** — Custom headers, `idempotencyKey`, or `customTimeout`.
+- **Returns:** `Promise<ApiResponse<ProductRecord>>`
 
 ```javascript
-await paymish.products.updateProduct(
+import type { UpdateProductDetailsPayload } from "paymish-typescript-sdk";
+
+const updatePayload: UpdateProductDetailsPayload = {
+  productId: "PROD_001",
+  productName: "Wireless Mechanical Keyboard Pro",
+  productDescription: "Updated description",
+  productPrice: "50000",
+  quantityType: "Limited",
+  quantityStock: 30,
+  minOrder: 1,
+  maxOrder: 5,
+  lowStockAlert: true,
+  notifyStock: 5,
+  shareableUrl: "https://paymish.example/p/keyboard-pro",
+  productBackgroundColor: "#ffffff",
+  deliveryAddress: "Required",
+  deliveryNote: "Optional",
+  redirectAfterPaymentLink: "https://paymish.example/thanks",
+  successMessage: "Payment received",
+  sendNotification: "email",
+  isActive: true,
+};
+
+const updated = await paymish.products.updateProductDetails(updatePayload, {
+  headers: { Authorization: "Bearer YOUR_TOKEN" },
+});
+```
+
+#### `deleteProduct(payload, options?)`
+
+Deletes or updates the status of an existing product.
+
+- **Endpoint:** `POST /api/payment-service/external/v1/products/delete-product`
+- `payload: ProductStatusActionPayload` **(Required)**
+  - `productId: ProductId` (`string | number`) — Product identifier.
+  - `status: boolean` — Product status action flag.
+- `options?: RequestOptions` **(Optional)** — Custom headers, `idempotencyKey`, or `customTimeout`.
+- **Returns:** `Promise<ApiResponse<ProductRecord>>`
+
+```javascript
+import type { ProductStatusActionPayload } from "paymish-typescript-sdk";
+
+const deletePayload: ProductStatusActionPayload = {
+  productId: "PROD_001",
+  status: false,
+};
+
+await paymish.products.deleteProduct(deletePayload, {
+  headers: { Authorization: "Bearer YOUR_TOKEN" },
+});
+```
+
+#### archiveProduct(payload, options?)
+
+Archives or unarchives an existing product.
+
+- **Endpoint:** `POST /api/payment-service/external/v1/products/archive-product`
+- `payload: ProductStatusActionPayload` **(Required)**
+  - `productId: ProductId` (`string | number`) — Product identifier.
+  - `status: boolean` — Archive status action flag.
+- `options?: RequestOptions` **(Optional)** — Custom headers, `idempotencyKey`, or `customTimeout`.
+- **Returns:** `Promise<ApiResponse<ProductRecord>>`
+
+```javascript
+await paymish.products.archiveProduct(
+  { productId: "PROD_001", status: true },
+  { headers: { Authorization: "Bearer YOUR_TOKEN" } },
+);
+```
+
+#### `productUploadMedia(payload, options?)`
+
+Uploads a media file for a product using `multipart/form-data` (accepts a `FormData` instance or a plain object converted automatically to `FormData`).
+
+- **Endpoint:** `POST /api/payment-service/external/v1/products/product-upload-media`
+- `payload: ProductFileUploadInput` (`FormData | ProductFileUploadObjectPayload`, **Required**)
+  - `productId: ProductId` (`string | number`) — Product identifier.
+  - `media: ProductUploadFile` — Media file, Blob, File, stream, or upload value.
+- `options?: RequestOptions` **(Optional)** — Custom headers, idempotencyKey, or customTimeout.
+- **Returns:** `Promise<ApiResponse<ProductMediaRecord>>`
+
+```javascript
+const formData = new FormData();
+formData.append("productId", "PROD_001");
+formData.append(
+  "media",
+  new Blob(["image-bytes"], { type: "image/png" }),
+  "keyboard.png",
+);
+
+const uploaded = await paymish.products.productUploadMedia(formData, {
+  headers: { Authorization: "Bearer YOUR_TOKEN" },
+});
+```
+
+#### `getProductMedia(identifier, options?)`
+
+Retrieves media items associated with a specific product.
+
+- **Endpoint:** `GET /api/payment-service/external/v1/products/get-product-media`
+- `identifier: ProductIdentifierInput` **(Required)** — Product ID (`string | number`) or an object containing `productId` or `id`.
+- `options?: RequestOptions` **(Optional)** — Custom headers, `idempotencyKey`, or `customTimeout`.
+- **Returns:** `Promise<ApiResponse<ProductMediaRecord[]>>`
+
+```javascript
+const mediaList = await paymish.products.getProductMedia("PROD_001", {
+  headers: { Authorization: "Bearer YOUR_TOKEN" },
+});
+```
+
+#### `deleteProductMedia(payload, options?)`
+
+Deletes or updates the status of an existing product media item.
+
+- **Endpoint:** `POST /api/payment-service/external/v1/products/delete-product-media`
+- `payload: DeleteProductMediaPayload (Required)`
+  - `mediaId: string | number` — Media item identifier.
+  - `status: boolean` — Status action flag.
+- `options?: RequestOptions` **(Optional)** — Custom headers, `idempotencyKey`, or `customTimeout`.
+- **Returns:** `Promise<ApiResponse<ProductMediaRecord>>`
+
+```javascript
+await paymish.products.deleteProductMedia(
+  { mediaId: "MED_101", status: false },
+  { headers: { Authorization: "Bearer YOUR_TOKEN" } },
+);
+```
+
+#### `getProductInventoryDetails(identifier, options?)`
+
+Retrieves inventory details for a specific product.
+
+- **Endpoint:** `GET /api/payment-service/external/v1/products/get-product-inventory-details`
+- `identifier: ProductIdentifierInput` **(Required)** — Product ID (`string | number`) or an object containing `productId` or `id`.
+- `options?: RequestOptions` **(Optional)** — Custom headers, `idempotencyKey`, or `customTimeout`.
+- **Returns:** `Promise<ApiResponse<ProductInventoryRecord>>`
+
+```javascript
+const inventory = await paymish.products.getProductInventoryDetails(
+  "PROD_001",
   {
-    productId: "143",
-    productName: "Updated E-Book Title",
+    headers: { Authorization: "Bearer YOUR_TOKEN" },
   },
-  { headers: { Authorization: "Bearer YOUR_SECRET_KEY" } },
 );
 ```
 
-#### `updateProductStatus(payload, [options])`
+#### `addDigitalDownloadFiles(payload, options?)`
 
-Updates the active or published status of a product.
+Uploads a digital download file for a product using `multipart/form-data` (accepts a `FormData` instance or a plain object converted automatically to `FormData`).
 
-- `payload (Object, Required)`
-  - `productId (string | number, Required)` — The ID of the product.
-  - `status (boolean | string, Required)` — Status value or action.
-- `options (Object, Optional)` — Custom per-request options.
+- **Endpoint:** `POST /api/payment-service/external/v1/products/add-digital-download-files`
+- `payload: ProductFileUploadInput` (`FormData | ProductFileUploadObjectPayload`, **Required**)
+  - `productId: ProductId` (`string | number`) — Product identifier.
+  - `media: ProductUploadFile` — Digital file, Blob, File, stream, or upload value.
+- `options?: RequestOptions` **(Optional)** — Custom headers, `idempotencyKey`, or `customTimeout`.
+- **Returns:** `Promise<ApiResponse<ProductMediaRecord>>`
 
 ```javascript
-await paymish.products.updateProductStatus(
-  { productId: "143", status: true },
-  { headers: { Authorization: "Bearer YOUR_SECRET_KEY" } },
+const downloadForm = new FormData();
+downloadForm.append("productId", "PROD_002");
+downloadForm.append(
+  "media",
+  new Blob(["ebook-content"], { type: "application/pdf" }),
+  "guide.pdf",
 );
-```
 
-#### `deleteProduct(payload, [options])`
-
-Deletes a product.
-
-- `payload (Object | string | number, Required)` — Product ID or payload containing product identifiers.
-- `options (Object, Optional)` — Custom per-request options.
-
-```javascript
-await paymish.products.deleteProduct("143", {
-  headers: { Authorization: "Bearer YOUR_SECRET_KEY" },
+const addedFile = await paymish.products.addDigitalDownloadFiles(downloadForm, {
+  headers: { Authorization: "Bearer YOUR_TOKEN" },
 });
 ```
 
-#### `getDigitalDownloadFiles(identifier, [options])`
+#### `getDigitalDownloadFiles(identifier, options?)`
 
 Retrieves digital download files associated with a specific product.
 
-- `identifier (string | number | Object, Required)` — Product ID or options object containing `productId` or `id`.
-- `options (Object, Optional)` — Custom per-request options.
+- **Endpoint:** `GET /api/payment-service/external/v1/products/get-digital-download-files`
+- `identifier: ProductIdentifierInput` **(Required)** — Product ID (`string | number`) or an object containing `productId` or `id`.
+- `options?: RequestOptions` **(Optional)** — Custom headers, `idempotencyKey`, or `customTimeout`.
+- **Returns:** `Promise<ApiResponse<ProductMediaRecord[]>>`
 
 ```javascript
-const files = await paymish.products.getDigitalDownloadFiles("143", {
-  headers: { Authorization: "Bearer YOUR_SECRET_KEY" },
+const files = await paymish.products.getDigitalDownloadFiles("PROD_002", {
+  headers: { Authorization: "Bearer YOUR_TOKEN" },
 });
 ```
 
-#### `renameDigitalDownloadFiles(payload, [options])`
+#### `renameDigitalDownloadFiles(payload, options?)`
 
 Renames an existing digital download file associated with a product.
 
-- `payload (Object, Required)`
-  - `productId (string, Required)` — The ID of the product.
-  - `digitalDownloadFileId (string, Required)` — The ID of the digital download file to rename.
-  - `fileName (string, Required)` — The new name for the digital download file.
-- `options (Object, Optional)` — Custom per-request options.
+- **Endpoint:** `PUT /api/payment-service/external/v1/products/rename-digital-download-files`
+- `payload: RenameDigitalDownloadFilePayload` **(Required)
+  - `productId: ProductId` (`string | number`) — Product identifier.
+  - `digitalDownloadFileId: string | number` — Digital download file identifier.
+  - `fileName: string` — New file name.
+- `options?: RequestOptions` **(Optional)** — Custom headers, `idempotencyKey`, or `customTimeout`.
+- **Returns:** `Promise<ApiResponse<ProductMediaRecord>>`
 
 ```javascript
 await paymish.products.renameDigitalDownloadFiles(
   {
-    productId: "143",
-    digitalDownloadFileId: "29",
-    fileName: "new-file-name.png",
+    productId: "PROD_002",
+    digitalDownloadFileId: "FILE_12",
+    fileName: "updated-guide.pdf",
   },
-  { headers: { Authorization: "Bearer YOUR_SECRET_KEY" } },
+  { headers: { Authorization: "Bearer YOUR_TOKEN" } },
 );
 ```
 
-#### `deleteDigitalDownloadFiles(payload, [options])`
+#### `deleteDigitalDownloadFiles(payload, options?)`
 
 Deletes or updates the status of an existing digital download file.
 
-- `payload (Object, Required)`
-  - `productId (string, Required)` — The ID of the product.
-  - `digitalDownloadFileId (string, Required)` — The ID of the digital download file.
-  - `status (boolean, Required)` — The status action.
-- `options (Object, Optional)` — Custom per-request options.
+- **Endpoint:** `POST /api/payment-service/external/v1/products/delete-digital-download-files`
+- `payload: DeleteDigitalDownloadFilePayload` **(Required)**
+  - `productId: ProductId` (`string | number`) — Product identifier.
+  - `digitalDownloadFileId: string | number` — Digital download file identifier.
+  - `status: boolean` — Status action flag.
+- `options?: RequestOptions` **(Optional)** — Custom headers, `idempotencyKey`, or `customTimeout`.
+- **Returns:** `Promise<ApiResponse<ProductMediaRecord>>`
 
 ```javascript
 await paymish.products.deleteDigitalDownloadFiles(
   {
-    productId: "143",
-    digitalDownloadFileId: "29",
+    productId: "PROD_002",
+    digitalDownloadFileId: "FILE_12",
     status: false,
   },
-  { headers: { Authorization: "Bearer YOUR_SECRET_KEY" } },
+  { headers: { Authorization: "Bearer YOUR_TOKEN" } },
 );
 ```
 
-#### `setDownloadLinkExpiry(payload, [options])`
+#### `setDownloadLinkExpiry(payload, options?)`
 
-Sets the download link expiry configuration for a product.
+Configures download link expiration settings for a product.
 
-- `payload (Object, Required)`
-  - `productId (string, Required)` — The ID of the product.
-  - `isDownloadLinkExpiry (boolean, Required)` — Flag to indicate if download link expiry is enabled.
-  - `downloadLinkExpiryDuration (string, Required)` — The duration for which the download link will be active.
-- `options (Object, Optional)` — Custom per-request options.
+- **Endpoint:** `PUT /api/payment-service/external/v1/products/set-download-link-expiry`
+- `payload: SetDownloadLinkExpiryPayload` **(Required)**
+  - `productId: ProductId` (`string | number`) — Product identifier.
+  - `isDownloadLinkExpiry: boolean` — Whether download link expiry is enabled.
+  - `downloadLinkExpiryDuration: string` — Duration for which download links remain valid.
+- `options?: RequestOptions` **(Optional)** — Custom headers, `idempotencyKey`, or `customTimeout`.
+- **Returns:** `Promise<ApiResponse<ProductRecord>>`
 
 ```javascript
 await paymish.products.setDownloadLinkExpiry(
   {
-    productId: "143",
+    productId: "PROD_002",
     isDownloadLinkExpiry: true,
-    downloadLinkExpiryDuration: "30",
+    downloadLinkExpiryDuration: "7d",
   },
-  { headers: { Authorization: "Bearer YOUR_SECRET_KEY" } },
+  { headers: { Authorization: "Bearer YOUR_TOKEN" } },
 );
 ```
 
-#### `addDeliveryFees(payload, [options])`
+#### `addDeliveryFees(payload, options?)`
 
-Adds delivery fees for a specific location to a product.
+Adds a location-based delivery fee to a product.
 
-- `payload (Object, Required)`
-  - `productId (string, Required)` — The ID of the product.
-  - `location (string, Required)` — The location for which delivery fees are being added.
-  - `fees (string, Required)` — The amount of delivery fees.
-- `options (Object, Optional)` — Custom per-request options.
+- **Endpoint:** `POST /api/payment-service/external/v1/products/add-delivery-fees`
+- `payload: AddDeliveryFeesPayload` **(Required)**
+  - `productId: ProductId` (`string | number`) — Product identifier.
+  - `location: string` — Delivery location.
+  - `fees: string | number` — Delivery fee amount.
+- `options?: RequestOptions` **(Optional)** — Custom headers, `idempotencyKey`, or `customTimeout`.
+- **Returns:** `Promise<ApiResponse<DeliveryFeeRecord>>`
 
 ```javascript
 await paymish.products.addDeliveryFees(
   {
-    productId: "143",
-    location: "New York",
-    fees: "15.00",
+    productId: "PROD_001",
+    location: "Lagos",
+    fees: "2500",
   },
-  { headers: { Authorization: "Bearer YOUR_SECRET_KEY" } },
+  { headers: { Authorization: "Bearer YOUR_TOKEN" } },
 );
 ```
 
-#### `getDeliveryFees(identifier, [options])`
+#### `getDeliveryFees(identifier, options?)`
 
 Retrieves delivery fees for a specific product.
 
-- `identifier (string | number | Object, Required)` — Product ID or options object containing `productId` or `id`.
-- `options (Object, Optional)` — Custom per-request options.
+- **Endpoint:** `GET /api/payment-service/external/v1/products/get-delivery-fees`
+- `identifier: ProductIdentifierInput` **(Required)** — Product ID (`string | number`) or an object containing `productId` or `id`.
+- `options?: RequestOptions` **(Optional)** — Custom headers, `idempotencyKey`, or `customTimeout`.
+- **Returns:** `Promise<ApiResponse<DeliveryFeeRecord[]>>`
 
 ```javascript
-const fees = await paymish.products.getDeliveryFees("143", {
-  headers: { Authorization: "Bearer YOUR_SECRET_KEY" },
+const fees = await paymish.products.getDeliveryFees("PROD_001", {
+  headers: { Authorization: "Bearer YOUR_TOKEN" },
 });
 ```
 
-#### `updateDeliveryFees(payload, [options])`
+#### `updateDeliveryFees(payload, options?)`
 
 Updates an existing delivery fee record for a product.
 
-- `payload (Object, Required)`
-  - `productId (string, Required)` — The ID of the product.
-  - `deliveryFeesId (string, Required)` — The ID of the delivery fee record to update.
-  - `location (string, Required)` — The location for which the delivery fees are being updated.
-  - `fees (string, Required)` — The amount of delivery fees.
-- `options (Object, Optional)` — Custom per-request options.
+- **Endpoint:** `PUT /api/payment-service/external/v1/products/update-delivery-fees`
+- `payload: UpdateDeliveryFeesPayload` **(Required)**
+  - `productId: ProductId` (`string | number`) — Product identifier.
+  - `deliveryFeesId: string | number` — Delivery fee record identifier.
+  - `location: string` — Updated delivery location.
+  - `fees: string | number` — Updated delivery fee amount.
+- `options?: RequestOptions` **(Optional)** — Custom headers, `idempotencyKey`, or `customTimeout`.
+- **Returns:** `Promise<ApiResponse<DeliveryFeeRecord>>`
 
 ```javascript
 await paymish.products.updateDeliveryFees(
@@ -1503,102 +1682,125 @@ await paymish.products.updateDeliveryFees(
 );
 ```
 
-#### `deleteDeliveryFees(payload, [options])`
+#### `deleteDeliveryFees(payload, options?)`
 
 Deletes or updates the status of an existing delivery fee record.
 
-- `payload (Object, Required)`
-  - `productId (string, Required)` — The ID of the product.
-  - `deliveryFeesId (string, Required)` — The ID of the delivery fee record.
-  - `status (boolean, Required)` — The status action.
-- `options (Object, Optional)` — Custom per-request options.
+- **Endpoint:** `POST /api/payment-service/external/v1/products/delete-delivery-fees`
+- `payload: DeleteDeliveryFeesPayload` **(Required)**
+  - `productId: ProductId` (`string | number`) — Product identifier.
+  - `deliveryFeesId: string | number` — Delivery fee record identifier.
+  - `status: boolean` — Status action flag.
+- `options?: RequestOptions` **(Optional)** — Custom headers, `idempotencyKey`, or `customTimeout`.
+- **Returns:** `Promise<ApiResponse<DeliveryFeeRecord>>`
 
 ```javascript
 await paymish.products.deleteDeliveryFees(
   {
-    productId: "143",
-    deliveryFeesId: "22",
+    productId: "PROD_001",
+    deliveryFeesId: "FEE_05",
     status: false,
   },
-  { headers: { Authorization: "Bearer YOUR_SECRET_KEY" } },
+  { headers: { Authorization: "Bearer YOUR_TOKEN" } },
 );
 ```
 
-#### `slugExist(payload, [options])`
+#### `slugExist(payload, options?)`
 
 Checks whether a product slug already exists.
 
-- `payload (Object | string, Required)` — Slug string or options object containing `slug`.
-- `options (Object, Optional)` — Custom per-request options.
+- **Endpoint:** `POST /api/payment-service/external/v1/products/slugExist`
+- `payload: SlugCheckInput` **(Required)** — Slug string or an object containing `slug`.
+- `options?: RequestOptions` **(Optional)** — Custom headers, `idempotencyKey`, or `customTimeout`.
+- **Returns:** `Promise<ApiResponse<Record<string, unknown>>>`
 
 ```javascript
-const exists = await paymish.products.slugExist("my-product-slug", {
-  headers: { Authorization: "Bearer YOUR_SECRET_KEY" },
-});
+const slugResult = await paymish.products.slugExist(
+  "wireless-mechanical-keyboard",
+  {
+    headers: { Authorization: "Bearer YOUR_TOKEN" },
+  },
+);
 ```
 
-#### `addDiscountCode(payload, [options])`
+#### `addDiscountCode(payload, options?)`
 
 Creates a new discount code.
 
-- `payload (Object, Required)`
-  - `code (string, Required)` — The discount code.
-  - `value (number, Required)` — The discount value.
-  - `discounttype (string, Required)` — The type of discount (e.g. percentage, flat).
-  - `productId (number, Optional)` — Optional product ID.
-  - Other optional configuration rules (`minOrderAmount`, `maxUsePerCustomer`, `maxClaims`, `startDate`, `endDate`, `isActive`, `isDelete`).
-- `options (Object, Optional)` — Custom per-request options.
+- **Endpoint:** `POST /api/payment-service/external/v1/products/add-discount-code`
+- `payload: AddDiscountCodePayload` **(Required)**
+  - `code: string` — Discount code string.
+  - `value: number` — Discount value.
+  - `discounttype: string` — Discount type.
+  - `productId?: number | string` — Optional associated product ID.
+  - `minOrderAmount?: number` — Optional minimum order amount.
+  - `maxUsePerCustomer?: number` — Optional maximum redemptions per customer.
+  - `maxClaims?: number` — Optional maximum total redemptions.
+  - `startDate?: string` — Optional start date.
+  - `endDate?: string` — Optional end date.
+  - `isActive?: boolean` — Optional active status flag.
+  - `isDelete?: boolean` — Optional deleted flag.
+- `options?: RequestOptions` **(Optional)** — Custom headers, `idempotencyKey`, or `customTimeout`.
+- **Returns:** `Promise<ApiResponse<DiscountCodeRecord>>`
 
 ```javascript
-const discount = await paymish.products.addDiscountCode(
-  {
-    code: "SUMMER20",
-    value: 20,
-    discounttype: "percentage",
-    isActive: true,
-  },
-  { headers: { Authorization: "Bearer YOUR_SECRET_KEY" } },
-);
+import type { AddDiscountCodePayload } from "paymish-typescript-sdk";
+
+const discountPayload: AddDiscountCodePayload = {
+  productId: "PROD_001",
+  code: "SAVE10",
+  value: 10,
+  discounttype: "percentage",
+  isActive: true,
+};
+
+const createdCode = await paymish.products.addDiscountCode(discountPayload, {
+  headers: { Authorization: "Bearer YOUR_TOKEN" },
+});
 ```
 
-#### `getDiscountCodes([params], [options])`
+#### `getDiscountCodes(params?, options?)`
 
-Retrieves discount codes based on optional query parameters like productId or code.
+Retrieves discount codes filtered by optional query parameters (`productId`, `code`).
 
-- `params (Object, Optional)`
-  - `productId (string | number, Optional)` — Product ID filter.
-  - `code (string, Optional)` — Discount code filter.
-- `options (Object, Optional)` — Custom per-request options.
+- **Endpoint:** `GET /api/payment-service/external/v1/products/get-discount-codes`
+- `params?: GetDiscountCodesParams` **(Optional)** — Query parameters including `productId` and `code`.
+- `options?: RequestOptions` **(Optional)** — Custom headers, `idempotencyKey`, or `customTimeout`.
+- **Returns:** `Promise<ApiResponse<DiscountCodeRecord[]>>`
 
 ```javascript
 const codes = await paymish.products.getDiscountCodes(
-  { productId: "123" },
-  { headers: { Authorization: "Bearer YOUR_SECRET_KEY" } },
+  { productId: "PROD_001", code: "SAVE10" },
+  { headers: { Authorization: "Bearer YOUR_TOKEN" } },
 );
 ```
 
-#### `updateDiscountCodeDetails([payload], [options])`
+#### `updateDiscountCodeDetails(payload?, options?)`
 
-Updates discount code details.
+Updates details for an existing discount code.
 
-- `payload (Object, Optional)` — Update discount code payload details.
-- `options (Object, Optional)` — Custom per-request options.
+- **Endpoint:** `PUT /api/payment-service/external/v1/products/update-discount-code-details`
+- `payload?: UpdateDiscountCodeDetailsPayload` **(Optional)** — Discount code update payload (defaults to `{}`).
+- `options?: RequestOptions` **(Optional)** — Custom headers, `idempotencyKey`, or `customTimeout`.
+- **Returns:** `Promise<ApiResponse<DiscountCodeRecord>>`
 
 ```javascript
 await paymish.products.updateDiscountCodeDetails(
-  { id: 1, value: 25 },
-  { headers: { Authorization: "Bearer YOUR_SECRET_KEY" } },
+  { discountCodeId: "DISC_01", value: 15 },
+  { headers: { Authorization: "Bearer YOUR_TOKEN" } },
 );
 ```
 
-#### `verifyDiscountCode(payload, [options])`
+#### `verifyDiscountCode(payload, options?)`
 
-Verifies a discount code, with an optional product ID query parameter.
+Verifies a discount code, with an optional `productId` query parameter.
 
-- `payload (Object, Required)`
-  - `code (string, Required)` — The discount code to verify.
-  - `productId (string | number, Optional)` — Optional product ID.
-- `options (Object, Optional)` — Custom per-request options.
+- **Endpoint:** `POST /api/payment-service/external/v1/products/verify-discount-code`
+- `payload: VerifyDiscountCodePayload` **(Required)**
+  - `code: string` — Discount code to verify.
+  - `productId?: ProductId` — Optional product ID appended as a query parameter.
+- `options?: RequestOptions` **(Optional)** — Custom headers, `idempotencyKey`, or `customTimeout`.
+- **Returns:** `Promise<ApiResponse<DiscountCodeRecord>>`
 
 ```javascript
 const verification = await paymish.products.verifyDiscountCode(
