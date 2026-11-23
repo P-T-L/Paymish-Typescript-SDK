@@ -1116,133 +1116,156 @@ const createdTxPage =
 
 ### Plans Resource (`paymish.plans`)
 
-#### `createPlan(payload, [options])`
+#### `createPlan(payload, options?)`
 
-Creates a new payment plan.
+Creates a new recurring payment plan.
 
-- `payload (Object, Required)`
-  - `businessId (number, Required)` — ID of the business.
-  - `planName (string, Required)` — Name of the plan.
-  - `planDescription (string, Required)` — Description of the plan.
-  - `planAmount (number, Required)` — Amount for the plan.
-  - `interval (string, Required)` — Interval of the plan (e.g., Monthly, Yearly).
-  - `maxNoOfPayment (number, Required)` — Maximum number of payments allowed for the plan.
-  - `isSubscriptionPageForThisPlan (boolean, Required)` — Indicates if there is a subscription page for this plan.
-- `options (Object, Optional)` — Custom per-request options.
-
-```javascript
-const plan = await paymish.plans.createPlan(
-  {
-    businessId: 10,
-    planName: "Gold Plan",
-    planDescription: "Monthly premium subscription",
-    planAmount: 5000,
-    interval: "monthly",
-    maxNoOfPayment: 12,
-    isSubscriptionPageForThisPlan: true,
-  },
-  { headers: { Authorization: "Bearer YOUR_SECRET_KEY" } },
-);
-```
-
-#### `getPlans([params], [options])`
-
-Retrieves a paginated list of payment plans with optional filters.
-
-- `params (Object, Optional)` — Optional query parameters (e.g., `{ status: "Active", interval: "monthly", page: 1, limit: 10 }`).
-- `options (Object, Optional)` — Custom per-request options.
+- **Endpoint:** `POST /api/payment-service/external/v1/plans/create-plan`
+- `payload: CreatePlanPayload` **(Required)**
+  - `businessId: number` — Business identifier.
+  - `planName: string` — Name of the plan.
+  - `planDescription: string` — Description of the plan.
+  - `planAmount: number` — Plan charge amount.
+  - `interval: string` — Billing interval (e.g., `Daily`, `Weekly`, `Monthly`, `Quarterly`, `Biannually`, `Annually`).
+  - `maxNoOfPayment: number` — Maximum number of payments allowed.
+  - `isSubscriptionPageForThisPlan: boolean` — Whether a subscription page exists for this plan.
+- `options?: RequestOptions` **(Optional)** — Custom headers, `idempotencyKey`, or `customTimeout`.
+- **Returns:** `Promise<ApiResponse<PlanRecord>>`
 
 ```javascript
-const plans = await paymish.plans.getPlans(
-  { status: "Active", page: 1 },
-  { headers: { Authorization: "Bearer YOUR_SECRET_KEY" } },
-);
-```
+import type { CreatePlanPayload } from "paymish-typescript-sdk";
 
-#### `getPlanDetails(identifier, [options])`
+const payload: CreatePlanPayload = {
+  businessId: 10,
+  planName: "Pro Monthly",
+  planDescription: "Monthly access to pro features",
+  planAmount: 15000,
+  interval: "Monthly",
+  maxNoOfPayment: 12,
+  isSubscriptionPageForThisPlan: true,
+};
 
-Retrieves detailed information for a specific payment plan.
-
-- `identifier (Object | number | string, Required)` — Plan ID or options object containing `planId`.
-- `options (Object, Optional)` — Custom per-request options.
-
-```javascript
-const planDetails = await paymish.plans.getPlanDetails(98, {
-  headers: { Authorization: "Bearer YOUR_SECRET_KEY" },
+const created = await paymish.plans.createPlan(payload, {
+  headers: { Authorization: "Bearer YOUR_TOKEN" },
 });
 ```
 
-#### `updatePlanDetails(payload, [options])`
+#### `getPlans(params?, options?)`
 
-Updates details for an existing payment plan.
+Retrieves a paginated list of payment plans with optional filter parameters.
 
-- `payload (Object, Required)`
-  - `planId (number, Required)` — The ID of the plan to update.
-  - `planName (string, Required)` — The name of the plan.
-  - `planDescription (string, Required)` — A description of the plan.
-  - `planAmount (number, Required)` — The amount for the plan.
-  - `interval (string, Required)` — Interval of the plan.
-  - `maxNoOfPayment (number, Required)` — Maximum number of payments allowed.
-- `options (Object, Optional)` — Custom per-request options.
+- **Endpoint:** `GET /api/payment-service/external/v1/plans/get-plans`
+- `params?: GetPlansParams` **(Optional)** — Filter and pagination options including `status`, `interval`, `noOfSubscriptions`, `noOfSubscriptionType`, `amount`, `amountType`, `revenueAmount`, `revenueType`, `searchPlanText`, `startDate`, `endDate`, `limit`, and `page`.
+- `options?: RequestOptions` **(Optional)** — Custom headers, `idempotencyKey`, or `customTimeout`.
+- **Returns:** `Promise<ApiResponse<PlanRecord[]>>`
 
 ```javascript
-await paymish.plans.updatePlanDetails(
-  {
-    planId: 98,
-    planName: "Updated Plan Name",
-    planDescription: "Updated plan description",
-    planAmount: 200,
-    interval: "Monthly",
-    maxNoOfPayment: 5,
-  },
-  { headers: { Authorization: "Bearer YOUR_SECRET_KEY" } },
+const plans = await paymish.plans.getPlans(
+  { status: "Active", interval: "Monthly", page: 1, limit: 10 },
+  { headers: { Authorization: "Bearer YOUR_TOKEN" } },
 );
 ```
 
-#### `deletePlan(payload, [options])`
+#### `getPlanDetails(identifier, options?)`
+
+Retrieves detailed information for a specific plan by ID or an object containing `planId` or `id`.
+
+- **Endpoint:** `GET /api/payment-service/external/v1/plans/get-plan-details`
+- `identifier: PlanIdentifierInput` **(Required)** — Plan ID (`number | string`) or an object containing `planId` or `id`.
+- `options?: RequestOptions` **(Optional)** — Custom headers, `idempotencyKey`, or `customTimeout`.
+- **Returns:** `Promise<ApiResponse<PlanRecord>>`
+
+```javascript
+const plan = await paymish.plans.getPlanDetails(25, {
+  headers: { Authorization: "Bearer YOUR_TOKEN" },
+});
+```
+
+#### `updatePlanDetails(payload, options?)`
+
+Updates details for an existing plan.
+
+- **Endpoint:** `PUT /api/payment-service/external/v1/plans/update-plan-details`
+- `payload: UpdatePlanDetailsPayload` **(Required)**
+  - `planId: number` — Plan identifier.
+  - `planName: string` — Updated plan name.
+  - `planDescription: string` — Updated plan description.
+  - `planAmount: number` — Updated plan amount.
+  - `interval: string` — Updated billing interval.
+  - `maxNoOfPayment: number` — Updated maximum payment count.
+- `options?: RequestOptions` **(Optional)** — Custom headers, `idempotencyKey`, or `customTimeout`.
+- **Returns:** `Promise<ApiResponse<PlanRecord>>`
+
+```javascript
+import type { UpdatePlanDetailsPayload } from "paymish-typescript-sdk";
+
+const updatePayload: UpdatePlanDetailsPayload = {
+  planId: 25,
+  planName: "Pro Monthly Plus",
+  planDescription: "Updated monthly pro plan",
+  planAmount: 20000,
+  interval: "Monthly",
+  maxNoOfPayment: 24,
+};
+
+const updated = await paymish.plans.updatePlanDetails(updatePayload, {
+  headers: { Authorization: "Bearer YOUR_TOKEN" },
+});
+```
+
+#### `deletePlan(payload, options?)`
 
 Deletes or updates the status of an existing payment plan.
 
-- `payload (Object, Required)`
-  - `planId (number, Required)` — The ID of the plan.
-  - `status (string, Required)` — The plan status action (e.g., `deleted`).
-- `options (Object, Optional)` — Custom per-request options.
+- **Endpoint:** `POST /api/payment-service/external/v1/plans/delete-plan`
+- `payload: DeletePlanPayload` **(Required)**
+  - `planId: number` — Plan identifier.
+  - `status: string` — Target plan status action.
+- `options?: RequestOptions` **(Optional)** — Custom headers, `idempotencyKey`, or `customTimeout`.
+- **Returns:** `Promise<ApiResponse<PlanRecord>>`
 
 ```javascript
-await paymish.plans.deletePlan(
-  {
-    planId: 98,
-    status: "deleted",
-  },
-  { headers: { Authorization: "Bearer YOUR_SECRET_KEY" } },
-);
+import type { DeletePlanPayload } from "paymish-typescript-sdk";
+
+const deletePayload: DeletePlanPayload = {
+  planId: 25,
+  status: "Archived",
+};
+
+const deleted = await paymish.plans.deletePlan(deletePayload, {
+  headers: { Authorization: "Bearer YOUR_TOKEN" },
+});
 ```
 
-#### `listPlansTransactionService([params], [options])`
+#### `listPlansTransactionService(params?, options?)`
 
 Retrieves a list of payment plans via the transaction service.
 
-- `params (Object, Optional)` — Query parameters for filtering and pagination.
-- `options (Object, Optional)` — Custom per-request options.
+- **Endpoint:** `GET /api/transaction-service/external/v1/plans`
+- `params?: ListTransactionPlansParams` **(Optional)** — Optional query parameters such as `page`, `limit`, and `search`.
+- `options?: RequestOptions` **(Optional)** — Custom headers, `idempotencyKey`, or `customTimeout`.
+- **Returns:** `Promise<ApiResponse<PlanRecord[]>>`
 
 ```javascript
-const transactionPlans = await paymish.plans.listPlansTransactionService(
-  { page: 1 },
-  { headers: { Authorization: "Bearer YOUR_SECRET_KEY" } },
+const txPlans = await paymish.plans.listPlansTransactionService(
+  { page: 1, limit: 10 },
+  { headers: { Authorization: "Bearer YOUR_TOKEN" } }
 );
 ```
 
-#### `createPlanTransactionService([payload], [options])`
+#### `createPlanTransactionService(payload?, options?)`
 
 Creates a new payment plan via the transaction service.
 
-- `payload (Object, Optional)` — Plan creation payload for transaction service.
-- `options (Object, Optional)` — Custom per-request options.
+- **Endpoint:** `POST /api/transaction-service/external/v1/plans`
+- `payload?: CreateTransactionPlanPayload` **(Optional)** — Optional plan creation payload (defaults to `{}`).
+- `options?: RequestOptions` **(Optional)** — Custom headers, `idempotencyKey`, or `customTimeout`.
+- **Returns:** `Promise<ApiResponse<PlanRecord>>`
 
 ```javascript
-const txPlan = await paymish.plans.createPlanTransactionService(
-  { planName: "Tx Plan", amount: 1000 },
-  { headers: { Authorization: "Bearer YOUR_SECRET_KEY" } },
+const createdTxPlan = await paymish.plans.createPlanTransactionService(
+  { name: "Starter Plan" },
+  { headers: { Authorization: "Bearer YOUR_TOKEN" } }
 );
 ```
 
